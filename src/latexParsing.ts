@@ -1,7 +1,7 @@
 export const ParsingPlus = (input: string) => {
   let plusTree = null;
   let plusTerm = new Array(); //'+' 기준으로 분리된 식
-
+  var isTimes:boolean = false;
   let opList = new Array(); //'+' 갯수 대로 저장
   var bracket = new Array(); // 괄호 판단용 스택
   var start = 0; // 식 분리용 구분자
@@ -18,15 +18,25 @@ export const ParsingPlus = (input: string) => {
       bracket.pop();
     }
     ////////////////////////////////
+   
     if (input[i] === "+" && bracket.length === 0) {
       opList.push(input[i]);
       plusTerm.push(input.slice(start, i));
       start = i + 1;
-    } else if (input[i] === "-" && bracket.length === 0) {
-      opList.push(input[i]);
-      plusTerm.push(input.slice(start, i));
+    }else if (input[i] === "-" && bracket.length === 0) {
+      if(i > 6){
+        if(input.slice(i-6,i) === "\\times"){
+          isTimes = true;
+        }
+      }
+      if(!isTimes){
+        opList.push(input[i]);
+        plusTerm.push(input.slice(start, i));
+        start = i;
+      }
 
-      start = i;
+      
+      isTimes = false;
     }
   }
   if (opList.length === 0) {
@@ -35,6 +45,7 @@ export const ParsingPlus = (input: string) => {
   } else {
     //////////// '+' 식 tree 구성 //////////////////
     plusTerm.push(input.slice(start));
+
     var plusTermList = new Array();
     for (var i = 0; i < plusTerm.length; i++) {
       if (plusTerm[i] !== "") {
@@ -107,6 +118,7 @@ const ParsingTimes = (input: string) => {
           start = i;
           i = j - 1;
         } else if (input.slice(i, i + 4) === "\\div") {
+          ///////////////// 나누기 기준 분리 //////////////////////
           opList.push("*");
           var expStart = i - 1;
           var expEnd = i + 4;
@@ -156,7 +168,45 @@ const ParsingTimes = (input: string) => {
           start = expStart;
           i = expEnd;
         }
-      } else if (input[i] === "^") {
+        else if (input.slice(i, i + 4) === "\\dot") {
+          ///////////////// 순환 소수 기준 분리 //////////////////////
+          opList.push("*");
+          var dotStart = i - 1;
+          var dotEnd = i + 4;
+          var frontBracket = new Array();
+          var backBracket = new Array();
+          if (input[i - 2].match(/[0-9]/)) {
+            var j = i - 2;
+            while (input[j].match(/[0-9]/)||input[j].match(/\./)) {
+              if (j === 0) {
+                break;
+              }
+              j--;
+            }
+            dotStart = j;
+          }
+          if (input[i + 4].match(/[0-9]/)) {
+            var k = i + 4;
+            while (!input[k].match(/[a-zA-Z]/)||input[k] !== "("||input[k] !== "{") {
+              if (k === input.length-1) {
+                break;
+              }
+              if(input[k] === "\\"){
+                if(input[k+1] !== "d"&&input[k+2] !== "o"){
+                  break;
+                }
+              }
+              k++;
+            }
+            dotEnd = k;
+          }
+
+          timesTerm.push(input.slice(start, dotStart));
+          start = dotStart;
+          i = dotEnd-1;
+        }
+      } 
+      else if (input[i] === "^") {
         ///////////////// 제곱 기준 분리 //////////////////////
         opList.push("*");
         var expStart = i - 1;
@@ -283,10 +333,14 @@ const ParsingTimes = (input: string) => {
           timesTerm.push(input.slice(start, i + 1));
           start = i + 1;
         }
-      } else if (input[i] === "-") {
-        opList.push("*");
-        timesTerm.push(input.slice(start, i + 1));
-        start = i + 1;
+      }
+      else if (input[i] === "-") {
+        if(input[i+1] === "(" || input[i+1] === "{" ||input[i+1].match(/[a-z]/)){
+            opList.push("*");
+            timesTerm.push(input.slice(start, i + 1));
+            start = i + 1; 
+        }
+
       }
     }
   }
@@ -320,6 +374,7 @@ const ParsingTimes = (input: string) => {
   } else {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
+
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
@@ -395,9 +450,22 @@ export const GenVar = (varInput: string) => {
   } else if (varInput.match(/[0-9]/)) {
     if (varInput.match(/\./)) {
       var decimal = varInput.split(".");
-      return { const: [[decimal[0], decimal[1], "None"], "decm"] };
+      if(decimal[1].includes("\\dot")){
+        var splitDecial = decimal[1].split("\\dot")
+        var repeatDecm
+        if(splitDecial.length > 2){
+          repeatDecm = splitDecial[1]+splitDecial[2]
+        }
+        else{
+          repeatDecm = splitDecial[1]
+        }
+        return { const: [[decimal[0], splitDecial[0], repeatDecm], "decm"] };
+        
+      }else{
+        return { const: [[decimal[0], decimal[1], "None"], "decm"] };
+      }
     } else {
-      return { const: [varInput, "int"] };
+      return { const: [parseInt(varInput), "int"] };
     }
   } else {
     return { var: varInput };
@@ -464,7 +532,12 @@ const GenSqrt = (sqrtInput: string) => {
 };
 
 const GenPow = (powInput: string) => {
-  var splitPow = powInput.split("^");
+  var firstSplitPow = powInput.split("^");
+  
+  var exp = firstSplitPow.slice(-1).toString();
+  var base = powInput.slice(0,powInput.lastIndexOf(exp)-1).toString();
+
+  var splitPow = [base,exp]
 
   var powTerm = new Array();
   var powTree = new Array();
@@ -478,14 +551,16 @@ const GenPow = (powInput: string) => {
       var powBracket = new Array();
       var powStart = 0;
       powBracket.push(splitPow[i][0]);
-
+      
       for (var j = 1; j < splitPow[i].length; j++) {
+        
         if (splitPow[i][j] === "}" || splitPow[i][j] === ")") {
           powBracket.pop();
         } else if (splitPow[i][j] === "{" || splitPow[i][j] === "(") {
           powBracket.push(splitPow[i][j]);
         }
         if (powBracket.length === 0) {
+          
           powTerm.push(splitPow[i].slice(powStart + 1, j));
           powStart = j + 1;
         }
@@ -499,39 +574,44 @@ const GenPow = (powInput: string) => {
 
   return { pow: powTree };
 };
-const GenDiv = (powInput: string) => {
-  var splitPow = powInput.split("\\div");
+const GenDiv = (divInput: string) => {
+  var firstSplitDiv = divInput.split("\\div");
+  
+  var numerater = firstSplitDiv.slice(-1).toString();
+  var denominator = divInput.slice(0,divInput.lastIndexOf(numerater)-4).toString();
 
-  var powTerm = new Array();
-  var powTree = new Array();
+  var splitDiv = [denominator,numerater]
 
-  for (var i = 0; i < splitPow.length; i++) {
-    if (splitPow[i][0].match(/[0-9]/)) {
-      powTerm.push(splitPow[i]);
-    } else if (splitPow[i][0].match(/[a-z]/)) {
-      powTerm.push(splitPow[i]);
+  var divTerm = new Array();
+  var divTree = new Array();
+
+  for (var i = 0; i < splitDiv.length; i++) {
+    if (splitDiv[i][0].match(/[0-9]/)) {
+      divTerm.push(splitDiv[i]);
+    } else if (splitDiv[i][0].match(/[a-z]/)) {
+      divTerm.push(splitDiv[i]);
     } else {
-      var powBracket = new Array();
-      var powStart = 0;
-      powBracket.push(splitPow[i][0]);
+      var divBracket = new Array();
+      var divStart = 0;
+      divBracket.push(splitDiv[i][0]);
 
-      for (var j = 1; j < splitPow[i].length; j++) {
-        if (splitPow[i][j] === "}" || splitPow[i][j] === ")") {
-          powBracket.pop();
-        } else if (splitPow[i][j] === "{" || splitPow[i][j] === "(") {
-          powBracket.push(splitPow[i][j]);
+      for (var j = 1; j < splitDiv[i].length; j++) {
+        if (splitDiv[i][j] === "}" || splitDiv[i][j] === ")") {
+          divBracket.pop();
+        } else if (splitDiv[i][j] === "{" || splitDiv[i][j] === "(") {
+          divBracket.push(splitDiv[i][j]);
         }
-        if (powBracket.length === 0) {
-          powTerm.push(splitPow[i].slice(powStart + 1, j));
-          powStart = j + 1;
+        if (divBracket.length === 0) {
+          divTerm.push(splitDiv[i].slice(divStart + 1, j));
+          divStart = j + 1;
         }
       }
     }
   }
 
-  for (var i = 0; i < powTerm.length; i++) {
-    powTree.push(ParsingPlus(powTerm[i]));
+  for (var i = 0; i < divTerm.length; i++) {
+    divTree.push(ParsingPlus(divTerm[i]));
   }
 
-  return { "/": powTree };
+  return { "/": divTree };
 };
