@@ -18,5 +18,3 @@ export function LatexToJsonLogic(str: any) {
 export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
-
-console.log(LatexToJsonLogic("$(-1-2\\times-6\\times-7)(3)=(-3\\times-6\\times-7+4)(2)$"))

@@ -7,8 +7,12 @@ export const LogicParsing = (logic: string) => {
   var jsonLogic = JSON.parse(logic);
 
   var type = Object.getOwnPropertyNames(jsonLogic);
-  if (type[0] === "system") {
-    
+
+  if(type[0] === ":"){
+    var expressions = jsonLogic[type[0]];
+    latexResult = CreateProportion(expressions[0]);
+  }
+  else if (type[0] === "system") {
     var expressions = jsonLogic[type[0]];
     var systemExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
@@ -72,6 +76,22 @@ export const LogicParsing = (logic: string) => {
 
   return "$" + latexResult + "$";
 };
+
+const CreateProportion = (expLogic: any) => {
+  var expressions = expLogic["="];
+
+  var leftExp = expressions[0]
+  var rightExp = expressions[1]
+
+  var leftExp1 = leftExp["+"][0]["*"][0]["/"][0]
+  var leftExp2 = leftExp["+"][0]["*"][0]["/"][1]
+  var rightExp1 = rightExp["+"][0]["*"][0]["/"][0]
+  var rightExp2 = rightExp["+"][0]["*"][0]["/"][1]
+  
+  var proportionResult = CreateExpression(leftExp1) + ":"+CreateExpression(leftExp2) + "="+CreateExpression(rightExp1) + ":"+CreateExpression(rightExp2)
+
+  return proportionResult
+}
 
 const CreateExpression = (expLogic: any) => {
   var key = "+";
