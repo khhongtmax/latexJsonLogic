@@ -1,6 +1,6 @@
 {
   "name": "latex-to-jsonlogic",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "latex to jsonlogic",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
