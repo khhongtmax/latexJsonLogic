@@ -10,7 +10,15 @@ const DetermineType = (input) => {
     var jsonLogicResult;
     var regularExpression = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\\]*(?:\\.[^\$\\]*)*\$/g; // latex 문법으로 표기 되었는지
     var blockRegularExpression = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]/g;
-    if (splitLatex.includes("=")) {
+    if (splitLatex.includes(":")) {
+        type = "proportion"; // 비례식
+        jsonLogicResult = DivideProportion(splitLatex);
+    }
+    else if (splitLatex.includes("\\begin{cases}")) {
+        type = "systemEquation"; // 연립방정식
+        jsonLogicResult = DivideSystemEquation(splitLatex);
+    }
+    else if (splitLatex.includes("=")) {
         type = "equation"; // 등식
         jsonLogicResult = DivideEquation(splitLatex);
     }
@@ -33,6 +41,42 @@ const DetermineType = (input) => {
     return JSON.stringify(jsonLogicResult);
 };
 exports.DetermineType = DetermineType;
+/////////////// 연립 방정식 분리 ///////////////////
+const DivideProportion = (proportion) => {
+    let equations = proportion.split("=");
+    var proportion1 = equations[0].split(":");
+    var proportion2 = equations[1].split(":");
+    const proportionLogic = {
+        ":": [{ "=": [{ "+": [{ "*": [{ "/": [(0, latexParsing_1.ParsingPlus)(proportion1[0]), (0, latexParsing_1.ParsingPlus)(proportion1[1])] }] }] }, { "+": [{ "*": [{ "/": [(0, latexParsing_1.ParsingPlus)(proportion2[0]), (0, latexParsing_1.ParsingPlus)(proportion2[1])] }] }] }] }],
+    };
+    return proportionLogic;
+};
+/////////////// 연립 방정식 분리 ///////////////////
+const DivideSystemEquation = (systemEquation) => {
+    let equations = systemEquation.split("\\begin{cases}");
+    equations = equations[1].split("\\end{cases}");
+    equations = equations[0].split("\\\\");
+    var equation1 = equations[0];
+    var equation2 = equations[1];
+    const systemEqualLogic = {
+        "system": [DeterminExpression(equation1), DeterminExpression(equation2)],
+    };
+    return systemEqualLogic;
+};
+/////////////// 연립 방정식 내부 식 파싱 ///////////////////
+const DeterminExpression = (expression) => {
+    var logicResult;
+    if (expression.includes("=")) {
+        logicResult = DivideEquation(expression);
+    }
+    else if (expression.includes("<") ||
+        expression.includes(">") ||
+        expression.includes("le") ||
+        expression.includes("ge")) {
+        logicResult = DivideInequality(expression);
+    }
+    return logicResult;
+};
 /////////////// 등식 양변 분리 ///////////////////
 const DivideEquation = (equation) => {
     const leftExpression = equation.slice(0, equation.indexOf("="));
