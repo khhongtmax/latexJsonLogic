@@ -18,4 +18,3 @@ export function LatexToJsonLogic(str: any) {
 export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
-

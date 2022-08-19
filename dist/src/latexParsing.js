@@ -207,6 +207,8 @@ const ParsingTimes = (input) => {
                     var piEnd = i + 3;
                     timesTerm.push(input.slice(start, piStart));
                     start = piStart;
+                    timesTerm.push(input.slice(piStart, piEnd));
+                    start = piEnd;
                     i = piEnd - 1;
                 }
             }

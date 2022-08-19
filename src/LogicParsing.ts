@@ -125,7 +125,12 @@ const CreateTerm = (termLogic: any) => {
       isNumSeq = false;
     } else if (termKey[0] === "const") {
       if(isNumSeq === true){
-        varExp += '\\times'+CreateConst(term);
+        if(termLogic[key][i]["const"][1] !== "special"){
+          varExp += '\\times'+CreateConst(term);
+        }
+        else{
+          varExp += CreateConst(term);
+        }
       }else{
         varExp += CreateConst(term);
       }
@@ -251,7 +256,7 @@ const CreateConst = (constLogic: any) => {
       }
   }
   else if(constLogic[key][1] === "special"){
-    constString = "\\pi"
+    constString = "\\pi "
   }
 
   return constString;
