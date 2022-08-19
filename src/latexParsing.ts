@@ -205,6 +205,15 @@ const ParsingTimes = (input: string) => {
           start = dotStart;
           i = dotEnd-1;
         }
+        else if(input.slice(i, i + 3) === "\\pi"){
+          ///////////////// 파이 기준 분리 //////////////////////
+          opList.push("*");
+          var piStart = i;
+          var piEnd = i + 3;
+          timesTerm.push(input.slice(start, piStart));
+          start = piStart;
+          i = piEnd-1;
+        }
       } 
       else if (input[i] === "^") {
         ///////////////// 제곱 기준 분리 //////////////////////
@@ -446,9 +455,12 @@ const DeterminBracket = (termInput: string, splitChar: string) => {
 
 export const GenVar = (varInput: string) => {
   if (varInput === "-") {
+  ////////////////// - 기호 ///////////////////////
     return { const: [-1, "int"] };
   } else if (varInput.match(/[0-9]/)) {
+    ////////////////// 숫자 ///////////////////////
     if (varInput.match(/\./)) {
+      ////////////////// 소수 ///////////////////////
       var decimal = varInput.split(".");
       if(decimal[1].includes("\\dot")){
         var splitDecial = decimal[1].split("\\dot")
@@ -465,9 +477,16 @@ export const GenVar = (varInput: string) => {
         return { const: [[decimal[0], decimal[1], "None"], "decm"] };
       }
     } else {
+      ////////////////// 정수 ///////////////////////
       return { const: [parseInt(varInput), "int"] };
     }
-  } else {
+  } 
+  else if(varInput === "\\pi"){
+    ////////////////// 파이 ///////////////////////
+    return {const:["pi", "special"]};
+  }
+  else {
+    ////////////////// 문자 ///////////////////////
     return { var: varInput };
   }
 };
