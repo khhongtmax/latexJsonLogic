@@ -212,6 +212,8 @@ const ParsingTimes = (input: string) => {
           var piEnd = i + 3;
           timesTerm.push(input.slice(start, piStart));
           start = piStart;
+          timesTerm.push(input.slice(piStart, piEnd));
+          start = piEnd;
           i = piEnd-1;
         }
       } 
@@ -383,7 +385,6 @@ const ParsingTimes = (input: string) => {
   } else {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
-
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {

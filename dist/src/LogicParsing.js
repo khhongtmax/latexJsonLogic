@@ -178,7 +178,26 @@ const CreatePow = (powLogic) => {
     for (var i = 0; i < powLogic[key].length; i++) {
         plusExp.push(CreateExpression(powLogic[key][i]));
     }
-    return `{${plusExp[0]}}^{${plusExp[1]}}`;
+    if (powLogic[key][0]["+"].length === 1) {
+        ////////////// base 식이 + 로 연결 (다항식)/////////////////////////////
+        if (powLogic[key][0]["+"][0]["*"].length === 1) {
+            ////////////// base 식에 곱해진것 없음 /////////////////////////////
+            var powKey = Object.getOwnPropertyNames(powLogic[key][0]["+"][0]["*"][0]);
+            if (powKey[0] === "const" || powKey[0] === "var") {
+                ////////////// base 식이 단독 문자 or 숫자 /////////////////////////////
+                return `{${plusExp[0]}}^{${plusExp[1]}}`;
+            }
+            else {
+                return `(${plusExp[0]})^{${plusExp[1]}}`;
+            }
+        }
+        else {
+            return `(${plusExp[0]})^{${plusExp[1]}}`;
+        }
+    }
+    else {
+        return `(${plusExp[0]})^{${plusExp[1]}}`;
+    }
 };
 const CreateVar = (varLogic) => {
     var key = "var";
@@ -214,6 +233,9 @@ const CreateConst = (constLogic) => {
             constString += "\\dot";
             constString += constLogic[key][0][2][constLogic[key][0][2].length - 1];
         }
+    }
+    else if (constLogic[key][1] === "special") {
+        constString = "\\pi";
     }
     return constString;
 };
