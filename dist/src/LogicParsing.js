@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LogicParsing = void 0;
 const LogicParsing = (logic) => {
     var latexResult;
-    if (typeof (logic) !== "string") {
+    if (typeof logic !== "string") {
         logic = JSON.stringify(logic);
     }
     var jsonLogic = JSON.parse(logic);
@@ -70,6 +70,9 @@ const LogicParsing = (logic) => {
             if (Object.getOwnPropertyNames(expressions[i])[0] === "const") {
                 pointExp.push(CreateConst(expressions[i]));
             }
+            else if (Object.getOwnPropertyNames(expressions[i])[0] === "var") {
+                pointExp.push(CreateVar(expressions[i]));
+            }
         }
         latexResult = "(" + pointExp.join(",") + ")";
     }
@@ -87,7 +90,13 @@ const CreateProportion = (expLogic) => {
     var leftExp2 = leftExp["+"][0]["*"][0]["/"][1];
     var rightExp1 = rightExp["+"][0]["*"][0]["/"][0];
     var rightExp2 = rightExp["+"][0]["*"][0]["/"][1];
-    var proportionResult = CreateExpression(leftExp1) + ":" + CreateExpression(leftExp2) + "=" + CreateExpression(rightExp1) + ":" + CreateExpression(rightExp2);
+    var proportionResult = CreateExpression(leftExp1) +
+        ":" +
+        CreateExpression(leftExp2) +
+        "=" +
+        CreateExpression(rightExp1) +
+        ":" +
+        CreateExpression(rightExp2);
     return proportionResult;
 };
 const CreateExpression = (expLogic) => {
@@ -99,10 +108,16 @@ const CreateExpression = (expLogic) => {
     var plusExp = plusExpArray.join("+");
     plusExp = plusExp.replace("-1(", "-(");
     plusExp = plusExp.replace("-1\\sqrt", "-\\sqrt");
-    var findReplaceChar = plusExp.match(/(-1[a-zA-Z])/);
-    if (findReplaceChar != null) {
-        var replaceChar = findReplaceChar[0].split("-1");
-        plusExp = plusExp.replace(/-1[a-zA-Z]*$/, "-" + replaceChar[1]);
+    plusExp = plusExp.replace("-1\\frac", "-\\frac");
+    var findReplaceCharMinusOne = plusExp.match(/-1{?[a-zA-Z]}?/);
+    if (findReplaceCharMinusOne != null) {
+        var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
+        plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
+    }
+    var findReplaceCharPlusOne = plusExp.match(/1{?[a-zA-Z]}?/);
+    if (findReplaceCharPlusOne != null) {
+        var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
+        plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
     }
     plusExp = plusExp.replace("+-", "-");
     return plusExp;
@@ -121,7 +136,7 @@ const CreateTerm = (termLogic) => {
         else if (termKey[0] === "const") {
             if (isNumSeq === true) {
                 if (termLogic[key][i]["const"][1] !== "special") {
-                    varExp += '\\times' + CreateConst(term);
+                    varExp += "\\times" + CreateConst(term);
                 }
                 else {
                     varExp += CreateConst(term);
@@ -157,6 +172,7 @@ const CreateTerm = (termLogic) => {
     }
     return varExp;
 };
+//분수
 const CreateFrac = (fracLogic) => {
     var key = "/";
     var plusExp = new Array();
@@ -165,6 +181,7 @@ const CreateFrac = (fracLogic) => {
     }
     return `\\frac{${plusExp[0]}}{${plusExp[1]}}`;
 };
+//제곱근
 const CreateSqrt = (sqrtLogic) => {
     var key = "root";
     var plusExp = new Array();
@@ -178,6 +195,7 @@ const CreateSqrt = (sqrtLogic) => {
         return `\\sqrt[${plusExp[1]}]{${plusExp[0]}}`;
     }
 };
+//제곱
 const CreatePow = (powLogic) => {
     var key = "pow";
     var plusExp = new Array();
@@ -205,11 +223,13 @@ const CreatePow = (powLogic) => {
         return `(${plusExp[0]})^{${plusExp[1]}}`;
     }
 };
+// 변수
 const CreateVar = (varLogic) => {
     var key = "var";
     var varString = varLogic[key];
     return varString;
 };
+// 상수
 const CreateConst = (constLogic) => {
     var key = "const";
     var constString = null;
@@ -222,7 +242,8 @@ const CreateConst = (constLogic) => {
             constString += ".";
             constString += constLogic[key][0][1];
         }
-        else if (constLogic[key][0][1] === "None" || constLogic[key][0][1] === null) {
+        else if (constLogic[key][0][1] === "None" ||
+            constLogic[key][0][1] === null) {
             constString = constLogic[key][0][0];
             constString += ".";
             constString += "\\dot";
