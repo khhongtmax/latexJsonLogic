@@ -167,7 +167,7 @@ const DivideInequality = (inequality: string) => {
     return inequalLogic;
   }
 };
-
+///////////////// 좌표 /////////////////////////////////
 const DivideCoordinate = (coordinate: string) => {
   var stripBracket = coordinate.slice(1, -1);
   var coordinateExp = stripBracket.split(",");

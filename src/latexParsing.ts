@@ -57,7 +57,6 @@ export const ParsingPlus = (input: string) => {
 };
 
 const ParsingTimes = (input: string) => {
-  let timesTree = null;
   let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식
 
   let opList = new Array(); //'*' 갯수 대로 저장
@@ -313,6 +312,12 @@ const ParsingTimes = (input: string) => {
           opList.push("*");
           timesTerm.push(input.slice(start, i + 1));
           start = i + 1;
+        }
+        else if(input[i + 1] === "'"){
+          ///////////////// 문자 - 문자' 분리 //////////////////////
+          opList.push("*");
+          timesTerm.push(input.slice(start, i + 2));
+          start = i + 2;
         }
       } else if (input[i].match(/[0-9]/)) {
         ///////////////// 숫자-문자/숫자-괄호 분리 //////////////////////

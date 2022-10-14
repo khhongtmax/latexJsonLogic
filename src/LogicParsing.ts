@@ -1,26 +1,24 @@
 export const LogicParsing = (logic: string) => {
   var latexResult;
 
-  if(typeof(logic) !== "string"){
+  if (typeof logic !== "string") {
     logic = JSON.stringify(logic);
   }
   var jsonLogic = JSON.parse(logic);
 
   var type = Object.getOwnPropertyNames(jsonLogic);
 
-  if(type[0] === ":"){
+  if (type[0] === ":") {
     var expressions = jsonLogic[type[0]];
     latexResult = CreateProportion(expressions[0]);
-  }
-  else if (type[0] === "system") {
+  } else if (type[0] === "system") {
     var expressions = jsonLogic[type[0]];
     var systemExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
-      systemExp.push(LogicParsing(expressions[i]).slice(1,-1));
+      systemExp.push(LogicParsing(expressions[i]).slice(1, -1));
     }
-    latexResult = "\\begin{cases}"+systemExp.join("\\\\") + "\\end{cases}";
-  }
-  else if (type[0] === "=") {
+    latexResult = "\\begin{cases}" + systemExp.join("\\\\") + "\\end{cases}";
+  } else if (type[0] === "=") {
     var expressions = jsonLogic[type[0]];
     var equalExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
@@ -66,12 +64,13 @@ export const LogicParsing = (logic: string) => {
     for (var i = 0; i < expressions.length; i++) {
       if (Object.getOwnPropertyNames(expressions[i])[0] === "const") {
         pointExp.push(CreateConst(expressions[i]));
+      } else if (Object.getOwnPropertyNames(expressions[i])[0] === "var") {
+        pointExp.push(CreateVar(expressions[i]));
       }
     }
     latexResult = "(" + pointExp.join(",") + ")";
-  }
-  else{
-    latexResult = CreateExpression(jsonLogic)
+  } else {
+    latexResult = CreateExpression(jsonLogic);
   }
 
   return "$" + latexResult + "$";
@@ -80,23 +79,30 @@ export const LogicParsing = (logic: string) => {
 const CreateProportion = (expLogic: any) => {
   var expressions = expLogic["="];
 
-  var leftExp = expressions[0]
-  var rightExp = expressions[1]
+  var leftExp = expressions[0];
+  var rightExp = expressions[1];
 
-  var leftExp1 = leftExp["+"][0]["*"][0]["/"][0]
-  var leftExp2 = leftExp["+"][0]["*"][0]["/"][1]
-  var rightExp1 = rightExp["+"][0]["*"][0]["/"][0]
-  var rightExp2 = rightExp["+"][0]["*"][0]["/"][1]
-  
-  var proportionResult = CreateExpression(leftExp1) + ":"+CreateExpression(leftExp2) + "="+CreateExpression(rightExp1) + ":"+CreateExpression(rightExp2)
+  var leftExp1 = leftExp["+"][0]["*"][0]["/"][0];
+  var leftExp2 = leftExp["+"][0]["*"][0]["/"][1];
+  var rightExp1 = rightExp["+"][0]["*"][0]["/"][0];
+  var rightExp2 = rightExp["+"][0]["*"][0]["/"][1];
 
-  return proportionResult
-}
+  var proportionResult =
+    CreateExpression(leftExp1) +
+    ":" +
+    CreateExpression(leftExp2) +
+    "=" +
+    CreateExpression(rightExp1) +
+    ":" +
+    CreateExpression(rightExp2);
+
+  return proportionResult;
+};
 
 const CreateExpression = (expLogic: any) => {
   var key = "+";
   var plusExpArray = new Array();
-  for (var i = 0; i < expLogic[key].length; i++) {  
+  for (var i = 0; i < expLogic[key].length; i++) {
     plusExpArray.push(CreateTerm(expLogic[key][i]));
   }
 
@@ -104,11 +110,18 @@ const CreateExpression = (expLogic: any) => {
 
   plusExp = plusExp.replace("-1(", "-(");
   plusExp = plusExp.replace("-1\\sqrt", "-\\sqrt");
-  var findReplaceChar = plusExp.match(/(-1[a-zA-Z])/)
-  if(findReplaceChar != null){
-    var replaceChar = findReplaceChar[0].split("-1")
-    plusExp = plusExp.replace(/-1[a-zA-Z]*$/, "-"+replaceChar[1]);
+  plusExp = plusExp.replace("-1\\frac", "-\\frac");
+  var findReplaceCharMinusOne = plusExp.match(/-1{?[a-zA-Z]}?/);
+  if (findReplaceCharMinusOne != null) {
+    var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
+    plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
   }
+  var findReplaceCharPlusOne = plusExp.match(/1{?[a-zA-Z]}?/);
+  if (findReplaceCharPlusOne != null) {
+    var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
+    plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
+  }
+
   plusExp = plusExp.replace("+-", "-");
 
   return plusExp;
@@ -125,14 +138,13 @@ const CreateTerm = (termLogic: any) => {
       varExp += CreateVar(term);
       isNumSeq = false;
     } else if (termKey[0] === "const") {
-      if(isNumSeq === true){
-        if(termLogic[key][i]["const"][1] !== "special"){
-          varExp += '\\times'+CreateConst(term);
-        }
-        else{
+      if (isNumSeq === true) {
+        if (termLogic[key][i]["const"][1] !== "special") {
+          varExp += "\\times" + CreateConst(term);
+        } else {
           varExp += CreateConst(term);
         }
-      }else{
+      } else {
         varExp += CreateConst(term);
       }
       isNumSeq = true;
@@ -159,7 +171,7 @@ const CreateTerm = (termLogic: any) => {
 
   return varExp;
 };
-
+//분수
 const CreateFrac = (fracLogic: any) => {
   var key = "/";
   var plusExp = new Array();
@@ -169,23 +181,21 @@ const CreateFrac = (fracLogic: any) => {
 
   return `\\frac{${plusExp[0]}}{${plusExp[1]}}`;
 };
-
+//제곱근
 const CreateSqrt = (sqrtLogic: any) => {
   var key = "root";
   var plusExp = new Array();
   for (var i = 0; i < sqrtLogic[key].length; i++) {
     plusExp.push(CreateExpression(sqrtLogic[key][i]));
   }
- 
-  if(plusExp[1] === "1"){
+
+  if (plusExp[1] === "1") {
     return `\\sqrt[]{${plusExp[0]}}`;
-  }
-  else{
+  } else {
     return `\\sqrt[${plusExp[1]}]{${plusExp[0]}}`;
   }
-  
 };
-
+//제곱
 const CreatePow = (powLogic: any) => {
   var key = "pow";
   var plusExp = new Array();
@@ -193,73 +203,64 @@ const CreatePow = (powLogic: any) => {
     plusExp.push(CreateExpression(powLogic[key][i]));
   }
 
-  if(powLogic[key][0]["+"].length === 1){
+  if (powLogic[key][0]["+"].length === 1) {
     ////////////// base 식이 + 로 연결 (다항식)/////////////////////////////
-    if(powLogic[key][0]["+"][0]["*"].length === 1){
+    if (powLogic[key][0]["+"][0]["*"].length === 1) {
       ////////////// base 식에 곱해진것 없음 /////////////////////////////
-      var powKey = Object.getOwnPropertyNames(powLogic[key][0]["+"][0]["*"][0])
-      if(powKey[0] === "const" || powKey[0] === "var"){
+      var powKey = Object.getOwnPropertyNames(powLogic[key][0]["+"][0]["*"][0]);
+      if (powKey[0] === "const" || powKey[0] === "var") {
         ////////////// base 식이 단독 문자 or 숫자 /////////////////////////////
         return `{${plusExp[0]}}^{${plusExp[1]}}`;
-      }
-      else{
+      } else {
         return `(${plusExp[0]})^{${plusExp[1]}}`;
       }
-    }
-    else{
-        return `(${plusExp[0]})^{${plusExp[1]}}`;
-    }
-
-  }
-  else{
+    } else {
       return `(${plusExp[0]})^{${plusExp[1]}}`;
+    }
+  } else {
+    return `(${plusExp[0]})^{${plusExp[1]}}`;
   }
-
-    
 };
-
+// 변수
 const CreateVar = (varLogic: any) => {
   var key = "var";
   var varString = varLogic[key];
 
   return varString;
 };
-
+// 상수
 const CreateConst = (constLogic: any) => {
   var key = "const";
   var constString = null;
   if (constLogic[key][1] === "int") {
     constString = constLogic[key][0];
-  }
-  else if(constLogic[key][1] === "decm"){
-
-      if(constLogic[key][0][2] === "None" ||constLogic[key][0][2] === null ){
-        constString = constLogic[key][0][0];
-        constString += "."
-        constString += constLogic[key][0][1];
+  } else if (constLogic[key][1] === "decm") {
+    if (constLogic[key][0][2] === "None" || constLogic[key][0][2] === null) {
+      constString = constLogic[key][0][0];
+      constString += ".";
+      constString += constLogic[key][0][1];
+    } else if (
+      constLogic[key][0][1] === "None" ||
+      constLogic[key][0][1] === null
+    ) {
+      constString = constLogic[key][0][0];
+      constString += ".";
+      constString += "\\dot";
+      constString += constLogic[key][0][2];
+    } else {
+      constString = constLogic[key][0][0];
+      constString += ".";
+      constString += constLogic[key][0][1];
+      constString += "\\dot";
+      for (var i = 0; i < constLogic[key][0][2].length; i++) {
+        constString += constLogic[key][0][2][i];
       }
-      else if(constLogic[key][0][1] === "None" ||constLogic[key][0][1] === null ){
-        constString = constLogic[key][0][0];
-        constString += "."
-        constString += "\\dot"
-        constString += constLogic[key][0][2];
-      }
-      else{
-          constString = constLogic[key][0][0];
-          constString += "."
-          constString += constLogic[key][0][1];
-          constString += "\\dot"
-          for(var i = 0; i < constLogic[key][0][2].length ; i++){
-            constString += constLogic[key][0][2][i];
-          }
-          constString += "\\dot"
-          constString += constLogic[key][0][2][constLogic[key][0][2].length-1];       
-      }
-  }
-  else if(constLogic[key][1] === "special"){
-    constString = "\\pi "
+      constString += "\\dot";
+      constString += constLogic[key][0][2][constLogic[key][0][2].length - 1];
+    }
+  } else if (constLogic[key][1] === "special") {
+    constString = "\\pi ";
   }
 
   return constString;
 };
-
