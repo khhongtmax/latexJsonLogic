@@ -57,7 +57,6 @@ export const ParsingPlus = (input: string) => {
 };
 
 const ParsingTimes = (input: string) => {
-  let timesTree = null;
   let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식
 
   let opList = new Array(); //'*' 갯수 대로 저장
@@ -205,6 +204,17 @@ const ParsingTimes = (input: string) => {
           start = dotStart;
           i = dotEnd-1;
         }
+        else if(input.slice(i, i + 3) === "\\pi"){
+          ///////////////// 파이 기준 분리 //////////////////////
+          opList.push("*");
+          var piStart = i;
+          var piEnd = i + 3;
+          timesTerm.push(input.slice(start, piStart));
+          start = piStart;
+          timesTerm.push(input.slice(piStart, piEnd));
+          start = piEnd;
+          i = piEnd-1;
+        }
       } 
       else if (input[i] === "^") {
         ///////////////// 제곱 기준 분리 //////////////////////
@@ -303,6 +313,12 @@ const ParsingTimes = (input: string) => {
           timesTerm.push(input.slice(start, i + 1));
           start = i + 1;
         }
+        else if(input[i + 1] === "'"){
+          ///////////////// 문자 - 문자' 분리 //////////////////////
+          opList.push("*");
+          timesTerm.push(input.slice(start, i + 2));
+          start = i + 2;
+        }
       } else if (input[i].match(/[0-9]/)) {
         ///////////////// 숫자-문자/숫자-괄호 분리 //////////////////////
         var backBracket = new Array();
@@ -374,7 +390,6 @@ const ParsingTimes = (input: string) => {
   } else {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
-
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
@@ -446,9 +461,12 @@ const DeterminBracket = (termInput: string, splitChar: string) => {
 
 export const GenVar = (varInput: string) => {
   if (varInput === "-") {
+  ////////////////// - 기호 ///////////////////////
     return { const: [-1, "int"] };
   } else if (varInput.match(/[0-9]/)) {
+    ////////////////// 숫자 ///////////////////////
     if (varInput.match(/\./)) {
+      ////////////////// 소수 ///////////////////////
       var decimal = varInput.split(".");
       if(decimal[1].includes("\\dot")){
         var splitDecial = decimal[1].split("\\dot")
@@ -465,9 +483,16 @@ export const GenVar = (varInput: string) => {
         return { const: [[decimal[0], decimal[1], "None"], "decm"] };
       }
     } else {
+      ////////////////// 정수 ///////////////////////
       return { const: [parseInt(varInput), "int"] };
     }
-  } else {
+  } 
+  else if(varInput === "\\pi"){
+    ////////////////// 파이 ///////////////////////
+    return {const:["pi", "special"]};
+  }
+  else {
+    ////////////////// 문자 ///////////////////////
     return { var: varInput };
   }
 };

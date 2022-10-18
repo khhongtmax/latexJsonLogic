@@ -10,7 +10,11 @@ export const DetermineType = (input: string) => {
     /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\\]*(?:\\.[^\$\\]*)*\$/g; // latex 문법으로 표기 되었는지
   var blockRegularExpression = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]/g;
 
-  if(splitLatex.includes("\\begin{cases}")){
+  if(splitLatex.includes(":")){
+    type = "proportion"; // 비례식
+    jsonLogicResult = DivideProportion(splitLatex);
+  }
+  else if(splitLatex.includes("\\begin{cases}")){
     type = "systemEquation"; // 연립방정식
     jsonLogicResult = DivideSystemEquation(splitLatex);
   }
@@ -37,6 +41,21 @@ export const DetermineType = (input: string) => {
 };
 
 /////////////// 연립 방정식 분리 ///////////////////
+const DivideProportion = (proportion: string) => {
+
+  let equations = proportion.split("=");
+
+  
+  var proportion1 = equations[0].split(":");
+  var proportion2 = equations[1].split(":");  
+
+  const proportionLogic = {
+    ":": [{"=":[{"+":[{"*":[{"/":[ParsingPlus(proportion1[0]),ParsingPlus(proportion1[1])]}]}]},{"+":[{"*":[{"/":[ParsingPlus(proportion2[0]),ParsingPlus(proportion2[1])]}]}]}]}],
+  };
+  return proportionLogic;
+};
+
+/////////////// 연립 방정식 분리 ///////////////////
 const DivideSystemEquation = (systemEquation: string) => {
 
   let equations = systemEquation.split("\\begin{cases}");
@@ -52,7 +71,7 @@ const DivideSystemEquation = (systemEquation: string) => {
   };
   return systemEqualLogic;
 };
-
+/////////////// 연립 방정식 내부 식 파싱 ///////////////////
 const DeterminExpression = (expression:string) => {
   var logicResult;
   if (expression.includes("=")) {
@@ -148,7 +167,7 @@ const DivideInequality = (inequality: string) => {
     return inequalLogic;
   }
 };
-
+///////////////// 좌표 /////////////////////////////////
 const DivideCoordinate = (coordinate: string) => {
   var stripBracket = coordinate.slice(1, -1);
   var coordinateExp = stripBracket.split(",");
