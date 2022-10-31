@@ -1,8 +1,9 @@
-export const ParsingPlus = (input: string) => {
+export const ParsingPlus = (input: string):any => {
   let plusTree = null;
   let plusTerm = new Array(); //'+' 기준으로 분리된 식
   var isTimes:boolean = false;
   let opList = new Array(); //'+' 갯수 대로 저장
+  let pmList = new Array(); //'+-' 갯수 대로 저장
   var bracket = new Array(); // 괄호 판단용 스택
   var start = 0; // 식 분리용 구분자
   for (var i = 0; i < input.length; i++) {
@@ -19,7 +20,12 @@ export const ParsingPlus = (input: string) => {
     }
     ////////////////////////////////
    
-    if (input[i] === "+" && bracket.length === 0) {
+    if(input.slice(i,i+3) === "\\pm" && bracket.length === 0){
+      pmList.push("\\pm");
+      plusTerm.push(input.slice(start, i));
+      start = i + 3;
+    }
+    else if (input[i] === "+" && bracket.length === 0) {
       opList.push(input[i]);
       plusTerm.push(input.slice(start, i));
       start = i + 1;
@@ -39,13 +45,24 @@ export const ParsingPlus = (input: string) => {
       isTimes = false;
     }
   }
-  if (opList.length === 0) {
+
+  if (opList.length === 0 && pmList.length === 0) {
     //////////// '+' 로 분리 불가 식 처리 //////////////////
     return { "+": [ParsingTimes(input)] };
-  } else {
+  }
+  else if(pmList.length !== 0){
+    plusTerm.push(input.slice(start));
+    var plusTermList = new Array();
+    for (var i = 0; i < plusTerm.length; i++) {
+      if (plusTerm[i] !== "") {
+        plusTermList.push(ParsingTimes(plusTerm[i]));
+      }
+    }
+    return { "+-": plusTermList };
+  } 
+  else {
     //////////// '+' 식 tree 구성 //////////////////
     plusTerm.push(input.slice(start));
-
     var plusTermList = new Array();
     for (var i = 0; i < plusTerm.length; i++) {
       if (plusTerm[i] !== "") {
@@ -55,6 +72,7 @@ export const ParsingPlus = (input: string) => {
     return { "+": plusTermList };
   }
 };
+
 
 const ParsingTimes = (input: string) => {
   let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식
@@ -86,7 +104,8 @@ const ParsingTimes = (input: string) => {
           opList.push("*");
           timesTerm.push(input.slice(start, i));
           start = i + 6;
-          i = i + 6;
+          i = i + 5;
+          console.log(input[i])
         } else if (
           input.slice(i, i + 5) === "\\frac" ||
           input.slice(i, i + 5) === "\\sqrt"
@@ -238,14 +257,19 @@ const ParsingTimes = (input: string) => {
           }
           expStart = j;
         } else if (input[i - 1].match(/[0-9]/)) {
-          var j = i - 2;
+          var j = i - 1;
           while (input[j].match(/[0-9]/)) {
             if (j === 0) {
               break;
             }
             j--;
           }
-          expStart = j;
+          if(j === 0){
+            expStart = j;
+          }else{
+            expStart = j+1;
+          }
+
         }
         if (input[i + 1] === "{") {
           backBracket.push("{");
@@ -266,6 +290,7 @@ const ParsingTimes = (input: string) => {
         timesTerm.push(input.slice(start, expStart));
         start = expStart;
         i = expEnd;
+        console.log(timesTerm)
       } else if (input[i] === ")" || input[i] === "}") {
         ///////////////// 괄호-괄호/괄호-문자 분리 //////////////////////
         if (i < input.length - 1) {
@@ -281,11 +306,17 @@ const ParsingTimes = (input: string) => {
           }
         }
       } else if (input[i].match(/[a-z]/)) {
-        ///////////////// 문자-괄호 분리 //////////////////////
+        
         var backBracket = new Array();
         var nomalEnd = i + 1;
         var nomalStart = i + 1;
-        if (input[i + 1] === "(" || input[i + 1] === "{") {
+        if(input.slice(i, i + 4) === "f(x)"){///////////////// f(x) 분리 //////////////////////
+          opList.push("*");
+          timesTerm.push(input.slice(start, i + 4));
+          start = i + 4;
+          i = i+3;
+        }
+        else if (input[i + 1] === "(" || input[i + 1] === "{") {///////////////// 문자-괄호 분리 //////////////////////
           opList.push("*");
 
           backBracket.push("{");
@@ -306,7 +337,7 @@ const ParsingTimes = (input: string) => {
           start = nomalStart;
           i = nomalEnd;
         }
-        if (input[i + 1].match(/[a-z]/)) {
+        else if (input[i + 1].match(/[a-z]/)) {
           ///////////////// 문자 - 문자 분리 //////////////////////
 
           opList.push("*");
@@ -545,13 +576,24 @@ const GenSqrt = (sqrtInput: string) => {
     }
   }
 
-  for (var i = sqrtTerm.length - 1; i >= 0; i--) {
-    sqrtExp = ParsingPlus(sqrtTerm[i]);
-    if (sqrtExp["+"][0]["*"][0] === undefined) {
-      sqrtExp["+"][0]["*"][0] = { const: [1, "int"] };
-    }
+  if(sqrtTerm.length === 1){
+    sqrtExp = ParsingPlus(sqrtTerm[0]);
     sqrtTree.push(sqrtExp);
+    sqrtExp = ParsingPlus('');
+    var type = Object.getOwnPropertyNames(sqrtExp);
+    sqrtExp[type[0]][0]["*"][0] = { const: [2, "int"] };
+    sqrtTree.push(sqrtExp);
+  }else{
+    for (var i = sqrtTerm.length - 1; i >= 0; i--) {
+      sqrtExp = ParsingPlus(sqrtTerm[i]);
+      var type = Object.getOwnPropertyNames(sqrtExp);
+      if (sqrtExp[type[0]][0]["*"][0] === undefined) {
+        sqrtExp[type[0]][0]["*"][0] = { const: [2, "int"] };
+      }
+      sqrtTree.push(sqrtExp);
+    }
   }
+
 
   return { root: sqrtTree };
 };

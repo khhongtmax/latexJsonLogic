@@ -10,18 +10,15 @@ export const DetermineType = (input: string) => {
     /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\\]*(?:\\.[^\$\\]*)*\$/g; // latex 문법으로 표기 되었는지
   var blockRegularExpression = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]/g;
 
-  if(splitLatex.includes(":")){
-    type = "proportion"; // 비례식
-    jsonLogicResult = DivideProportion(splitLatex);
-  }
-  else if(splitLatex.includes("\\begin{cases}")){
+  if(splitLatex.includes("\\begin{cases}")){
     type = "systemEquation"; // 연립방정식
     jsonLogicResult = DivideSystemEquation(splitLatex);
   }
-  else if (splitLatex.includes("=")) {
-    type = "equation"; // 등식
-    jsonLogicResult = DivideEquation(splitLatex);
-  } else if (
+  else if(splitLatex.includes(":")){
+    type = "proportion"; // 비례식
+    jsonLogicResult = DivideProportion(splitLatex);
+  }
+  else if (
     splitLatex.includes("<") ||
     splitLatex.includes(">") ||
     splitLatex.includes("le") ||
@@ -29,6 +26,10 @@ export const DetermineType = (input: string) => {
   ) {
     type = "inequality"; //부등식 < or > or <= or >=
     jsonLogicResult = DivideInequality(splitLatex);
+  }
+  else if (splitLatex.includes("=")) {
+    type = "equation"; // 등식
+    jsonLogicResult = DivideEquation(splitLatex);
   } else if (splitLatex.includes(",")) {
     type = "coordinate"; //좌표
     jsonLogicResult = DivideCoordinate(splitLatex);
@@ -60,23 +61,21 @@ const DivideSystemEquation = (systemEquation: string) => {
 
   let equations = systemEquation.split("\\begin{cases}");
   equations = equations[1].split("\\end{cases}");
-  equations = equations[0].split("\\\\");
-
-  var equation1 = equations[0];
-  var equation2 = equations[1];
-  
+  var equationList = [];
+  equationList = equations[0].split("\\\\"); 
 
   const systemEqualLogic = {
-    "system": [DeterminExpression(equation1), DeterminExpression(equation2)],
+    "system": equationList.map(DeterminExpression),
   };
   return systemEqualLogic;
 };
 /////////////// 연립 방정식 내부 식 파싱 ///////////////////
 const DeterminExpression = (expression:string) => {
   var logicResult;
-  if (expression.includes("=")) {
-    logicResult = DivideEquation(expression);
-  } else if (
+  if(expression.includes(":")){
+    logicResult = DivideProportion(expression);
+  }
+  else if (
     expression.includes("<") ||
     expression.includes(">") ||
     expression.includes("le") ||
@@ -84,6 +83,9 @@ const DeterminExpression = (expression:string) => {
   ) {
     logicResult = DivideInequality(expression);
   }
+  else if (expression.includes("=")) {
+    logicResult = DivideEquation(expression);
+  } 
 
   return logicResult;
 }
@@ -106,7 +108,13 @@ const DivideInequality = (inequality: string) => {
   ///////////// 부등식 기호 parsing ///////////////
   for (let i = 0; i < inequality.length; i++) {
     if (inequality[i] === "<" || inequality[i] === ">") {
-      mark.push(inequality[i]);
+      if(inequality[i + 1] === "="){
+        mark.push(inequality[i]+"=");
+      }
+      else{
+        mark.push(inequality[i]);
+      }
+
     }
     if (inequality[i] === "\\") {
       if (inequality[i + 1] === "l") {
@@ -117,17 +125,17 @@ const DivideInequality = (inequality: string) => {
         mark.push("\\ge");
       }
     }
-  }
+  }   
   ///////////// 부등식 식 parsing ///////////////
   if (mark.length > 1) {
     //////////////// 복합 부등식 //////////////////////////
     const leftExpression = inequality.slice(0, inequality.indexOf(mark[0]));
     const middleExpression = inequality.slice(
-      inequality.indexOf(mark[0]) + mark[0].length,
-      inequality.indexOf(mark[1])
+      inequality.indexOf(mark[0])+mark[0].length,
+      inequality.lastIndexOf(mark[1])
     );
     const rightExpression = inequality.slice(
-      inequality.indexOf(mark[1]) + mark[1].length
+      inequality.lastIndexOf(mark[1]) + mark[1].length
     );
 
     for (let i = 0; i < mark.length; i++) {

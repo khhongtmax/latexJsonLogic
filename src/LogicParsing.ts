@@ -189,8 +189,8 @@ const CreateSqrt = (sqrtLogic: any) => {
     plusExp.push(CreateExpression(sqrtLogic[key][i]));
   }
 
-  if (plusExp[1] === "1") {
-    return `\\sqrt[]{${plusExp[0]}}`;
+  if (plusExp[1] === "2") {
+    return `\\sqrt{${plusExp[0]}}`;
   } else {
     return `\\sqrt[${plusExp[1]}]{${plusExp[0]}}`;
   }
