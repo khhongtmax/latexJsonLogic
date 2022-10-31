@@ -288,17 +288,17 @@ const ParsingTimes = (input: string) => {
           }
         }
       } else if (input[i].match(/[a-z]/)) {
-        ///////////////// 문자-괄호 분리 //////////////////////
+        
         var backBracket = new Array();
         var nomalEnd = i + 1;
         var nomalStart = i + 1;
-        if(input.slice(i, i + 4) === "f(x)"){
+        if(input.slice(i, i + 4) === "f(x)"){///////////////// f(x) 분리 //////////////////////
           opList.push("*");
           timesTerm.push(input.slice(start, i + 4));
           start = i + 4;
           i = i+3;
         }
-        else if (input[i + 1] === "(" || input[i + 1] === "{") {
+        else if (input[i + 1] === "(" || input[i + 1] === "{") {///////////////// 문자-괄호 분리 //////////////////////
           opList.push("*");
 
           backBracket.push("{");
@@ -559,13 +559,23 @@ const GenSqrt = (sqrtInput: string) => {
     }
   }
 
-  for (var i = sqrtTerm.length - 1; i >= 0; i--) {
-    sqrtExp = ParsingPlus(sqrtTerm[i]);
-    if (sqrtExp["+"][0]["*"][0] === undefined) {
-      sqrtExp["+"][0]["*"][0] = { const: [1, "int"] };
-    }
+  if(sqrtTerm.length === 1){
+    sqrtExp = ParsingPlus(sqrtTerm[0]);
     sqrtTree.push(sqrtExp);
+    sqrtExp = ParsingPlus('');
+    sqrtExp["+"][0]["*"][0] = { const: [2, "int"] };
+    sqrtTree.push(sqrtExp);
+  }else{
+    for (var i = sqrtTerm.length - 1; i >= 0; i--) {
+      sqrtExp = ParsingPlus(sqrtTerm[i]);
+
+      if (sqrtExp["+"][0]["*"][0] === undefined) {
+        sqrtExp["+"][0]["*"][0] = { const: [2, "int"] };
+      }
+      sqrtTree.push(sqrtExp);
+    }
   }
+
 
   return { root: sqrtTree };
 };
