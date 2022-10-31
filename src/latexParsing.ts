@@ -86,7 +86,8 @@ const ParsingTimes = (input: string) => {
           opList.push("*");
           timesTerm.push(input.slice(start, i));
           start = i + 6;
-          i = i + 6;
+          i = i + 5;
+          console.log(input[i])
         } else if (
           input.slice(i, i + 5) === "\\frac" ||
           input.slice(i, i + 5) === "\\sqrt"
@@ -238,14 +239,19 @@ const ParsingTimes = (input: string) => {
           }
           expStart = j;
         } else if (input[i - 1].match(/[0-9]/)) {
-          var j = i - 2;
+          var j = i - 1;
           while (input[j].match(/[0-9]/)) {
             if (j === 0) {
               break;
             }
             j--;
           }
-          expStart = j;
+          if(j === 0){
+            expStart = j;
+          }else{
+            expStart = j+1;
+          }
+
         }
         if (input[i + 1] === "{") {
           backBracket.push("{");
@@ -266,6 +272,7 @@ const ParsingTimes = (input: string) => {
         timesTerm.push(input.slice(start, expStart));
         start = expStart;
         i = expEnd;
+        console.log(timesTerm)
       } else if (input[i] === ")" || input[i] === "}") {
         ///////////////// 괄호-괄호/괄호-문자 분리 //////////////////////
         if (i < input.length - 1) {
@@ -391,6 +398,7 @@ const ParsingTimes = (input: string) => {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
     var timesTermList = new Array();
+    console.log(timesTerm)
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
         if (timesTerm[i].slice(0, 5) === "\\frac") {

@@ -19,4 +19,4 @@ export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
 
-console.log(JsonLogicToLatex(`{"comp":[["<","<"],[{"+":[{"*":[{"const":[-1,"int"]},{"var":"a"}]}]},{"+":[{"*":[{"var":"x"}]}]},{"+":[{"*":[{"var":"a"}]}]}]]}`))
+console.log(JsonLogicToLatex(LatexToJsonLogic("$2\\pi r\\times\\frac{a}{360}$")))
