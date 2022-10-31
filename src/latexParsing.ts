@@ -292,7 +292,13 @@ const ParsingTimes = (input: string) => {
         var backBracket = new Array();
         var nomalEnd = i + 1;
         var nomalStart = i + 1;
-        if (input[i + 1] === "(" || input[i + 1] === "{") {
+        if(input.slice(i, i + 4) === "f(x)"){
+          opList.push("*");
+          timesTerm.push(input.slice(start, i + 4));
+          start = i + 4;
+          i = i+3;
+        }
+        else if (input[i + 1] === "(" || input[i + 1] === "{") {
           opList.push("*");
 
           backBracket.push("{");
@@ -313,7 +319,7 @@ const ParsingTimes = (input: string) => {
           start = nomalStart;
           i = nomalEnd;
         }
-        if (input[i + 1].match(/[a-z]/)) {
+        else if (input[i + 1].match(/[a-z]/)) {
           ///////////////// 문자 - 문자 분리 //////////////////////
 
           opList.push("*");

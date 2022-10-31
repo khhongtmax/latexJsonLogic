@@ -19,4 +19,4 @@ export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
 
-console.log(JsonLogicToLatex(LatexToJsonLogic("$2\\pi r\\times\\frac{a}{360}$")))
+console.log(LatexToJsonLogic("$f(x)=a\\divx$"))
