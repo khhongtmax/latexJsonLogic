@@ -1,8 +1,9 @@
-export const ParsingPlus = (input: string) => {
+export const ParsingPlus = (input: string):any => {
   let plusTree = null;
   let plusTerm = new Array(); //'+' 기준으로 분리된 식
   var isTimes:boolean = false;
   let opList = new Array(); //'+' 갯수 대로 저장
+  let pmList = new Array(); //'+-' 갯수 대로 저장
   var bracket = new Array(); // 괄호 판단용 스택
   var start = 0; // 식 분리용 구분자
   for (var i = 0; i < input.length; i++) {
@@ -19,7 +20,12 @@ export const ParsingPlus = (input: string) => {
     }
     ////////////////////////////////
    
-    if (input[i] === "+" && bracket.length === 0) {
+    if(input.slice(i,i+3) === "\\pm" && bracket.length === 0){
+      pmList.push("\\pm");
+      plusTerm.push(input.slice(start, i));
+      start = i + 3;
+    }
+    else if (input[i] === "+" && bracket.length === 0) {
       opList.push(input[i]);
       plusTerm.push(input.slice(start, i));
       start = i + 1;
@@ -39,13 +45,24 @@ export const ParsingPlus = (input: string) => {
       isTimes = false;
     }
   }
-  if (opList.length === 0) {
+
+  if (opList.length === 0 && pmList.length === 0) {
     //////////// '+' 로 분리 불가 식 처리 //////////////////
     return { "+": [ParsingTimes(input)] };
-  } else {
+  }
+  else if(pmList.length !== 0){
+    plusTerm.push(input.slice(start));
+    var plusTermList = new Array();
+    for (var i = 0; i < plusTerm.length; i++) {
+      if (plusTerm[i] !== "") {
+        plusTermList.push(ParsingTimes(plusTerm[i]));
+      }
+    }
+    return { "+-": plusTermList };
+  } 
+  else {
     //////////// '+' 식 tree 구성 //////////////////
     plusTerm.push(input.slice(start));
-
     var plusTermList = new Array();
     for (var i = 0; i < plusTerm.length; i++) {
       if (plusTerm[i] !== "") {
@@ -55,6 +72,7 @@ export const ParsingPlus = (input: string) => {
     return { "+": plusTermList };
   }
 };
+
 
 const ParsingTimes = (input: string) => {
   let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식
@@ -404,7 +422,6 @@ const ParsingTimes = (input: string) => {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
     var timesTermList = new Array();
-    console.log(timesTerm)
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
         if (timesTerm[i].slice(0, 5) === "\\frac") {
@@ -563,14 +580,15 @@ const GenSqrt = (sqrtInput: string) => {
     sqrtExp = ParsingPlus(sqrtTerm[0]);
     sqrtTree.push(sqrtExp);
     sqrtExp = ParsingPlus('');
-    sqrtExp["+"][0]["*"][0] = { const: [2, "int"] };
+    var type = Object.getOwnPropertyNames(sqrtExp);
+    sqrtExp[type[0]][0]["*"][0] = { const: [2, "int"] };
     sqrtTree.push(sqrtExp);
   }else{
     for (var i = sqrtTerm.length - 1; i >= 0; i--) {
       sqrtExp = ParsingPlus(sqrtTerm[i]);
-
-      if (sqrtExp["+"][0]["*"][0] === undefined) {
-        sqrtExp["+"][0]["*"][0] = { const: [2, "int"] };
+      var type = Object.getOwnPropertyNames(sqrtExp);
+      if (sqrtExp[type[0]][0]["*"][0] === undefined) {
+        sqrtExp[type[0]][0]["*"][0] = { const: [2, "int"] };
       }
       sqrtTree.push(sqrtExp);
     }

@@ -19,4 +19,4 @@ export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
 
-console.log(LatexToJsonLogic("$a\\sqrt{b^mc^n}$"))
+console.log(LatexToJsonLogic("$x=\\frac{A\\pm\\sqrt{B}}{a}$"))
