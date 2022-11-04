@@ -1,3 +1,4 @@
+import {divExp} from "./RegExpType";
 export const ParsingPlus = (input: string):any => {
   let plusTree = null;
   let plusTerm = new Array(); //'+' 기준으로 분리된 식
@@ -137,9 +138,15 @@ const ParsingTimes = (input: string) => {
           i = j - 1;
         } else if (input.slice(i, i + 4) === "\\div") {
           ///////////////// 나누기 기준 분리 //////////////////////
+          const test = new RegExp(divExp);
+          const words = test.exec(input);
+          if(words !== null){
+              console.log("dd"+words[0])
+          }
+
           opList.push("*");
           var expStart = i - 1;
-          var expEnd = i + 4;
+          var expEnd = i + 3;
           var frontBracket = new Array();
           var backBracket = new Array();
           if (input[i - 1] === "}" || input[i - 1] === ")") {
@@ -157,7 +164,7 @@ const ParsingTimes = (input: string) => {
             }
             expStart = j;
           } else if (input[i - 1].match(/[0-9]/)) {
-            var j = i - 2;
+            var j = i - 1;
             while (input[j].match(/[0-9]/)) {
               if (j === 0) {
                 break;
@@ -290,7 +297,7 @@ const ParsingTimes = (input: string) => {
         timesTerm.push(input.slice(start, expStart));
         start = expStart;
         i = expEnd;
-        console.log(timesTerm)
+        console.log("^"+input[i])
       } else if (input[i] === ")" || input[i] === "}") {
         ///////////////// 괄호-괄호/괄호-문자 분리 //////////////////////
         if (i < input.length - 1) {
@@ -299,13 +306,13 @@ const ParsingTimes = (input: string) => {
 
             timesTerm.push(input.slice(start, i + 1));
             start = i + 1;
-          } else if (input[i + 1].match(/[a-z]/)) {
+          } else if (input[i + 1].match(/[a-zA-Z]/)) {
             opList.push("*");
             timesTerm.push(input.slice(start, i + 1));
             start = i + 1;
           }
         }
-      } else if (input[i].match(/[a-z]/)) {
+      } else if (input[i].match(/[a-zA-Z]/)) {
         
         var backBracket = new Array();
         var nomalEnd = i + 1;
@@ -337,7 +344,7 @@ const ParsingTimes = (input: string) => {
           start = nomalStart;
           i = nomalEnd;
         }
-        else if (input[i + 1].match(/[a-z]/)) {
+        else if (input[i + 1].match(/[a-zA-Z]/)) {
           ///////////////// 문자 - 문자 분리 //////////////////////
 
           opList.push("*");
@@ -375,14 +382,14 @@ const ParsingTimes = (input: string) => {
           timesTerm.push(input.slice(start, nomalStart));
           start = nomalStart;
           i = nomalEnd;
-        } else if (input[i + 1].match(/[a-z]/)) {
+        } else if (input[i + 1].match(/[a-zA-Z]/)) {
           opList.push("*");
           timesTerm.push(input.slice(start, i + 1));
           start = i + 1;
         }
       }
       else if (input[i] === "-") {
-        if(input[i+1] === "(" || input[i+1] === "{" ||input[i+1].match(/[a-z]/)){
+        if(input[i+1] === "(" || input[i+1] === "{" ||input[i+1].match(/[a-zA-Z]/)){
             opList.push("*");
             timesTerm.push(input.slice(start, i + 1));
             start = i + 1; 
@@ -421,6 +428,7 @@ const ParsingTimes = (input: string) => {
   } else {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
+    console.log(timesTerm)
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
@@ -471,7 +479,7 @@ const DeterminBracket = (termInput: string, splitChar: string) => {
     ) {
       return true;
     }
-  } else if (termInput[0].match(/[a-z]/)) {
+  } else if (termInput[0].match(/[a-zA-Z]/)) {
     if (
       termInput.slice(splitCharPos + 1, splitCharPos + 1 + splitChar.length) ===
       splitChar
@@ -612,7 +620,7 @@ const GenPow = (powInput: string) => {
   for (var i = 0; i < splitPow.length; i++) {
     if (splitPow[i][0].match(/[0-9]/)) {
       powTerm.push(splitPow[i]);
-    } else if (splitPow[i][0].match(/[a-z]/)) {
+    } else if (splitPow[i][0].match(/[a-zA-Z]/)) {
       powTerm.push(splitPow[i]);
     } else {
       var powBracket = new Array();
@@ -655,7 +663,7 @@ const GenDiv = (divInput: string) => {
   for (var i = 0; i < splitDiv.length; i++) {
     if (splitDiv[i][0].match(/[0-9]/)) {
       divTerm.push(splitDiv[i]);
-    } else if (splitDiv[i][0].match(/[a-z]/)) {
+    } else if (splitDiv[i][0].match(/[a-zA-Z]/)) {
       divTerm.push(splitDiv[i]);
     } else {
       var divBracket = new Array();

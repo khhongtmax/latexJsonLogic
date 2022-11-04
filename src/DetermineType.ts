@@ -41,7 +41,7 @@ export const DetermineType = (input: string) => {
   return JSON.stringify(jsonLogicResult);
 };
 
-/////////////// 연립 방정식 분리 ///////////////////
+/////////////// 비례식 분리 ///////////////////
 const DivideProportion = (proportion: string) => {
 
   let equations = proportion.split("=");
