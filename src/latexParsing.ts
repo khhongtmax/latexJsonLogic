@@ -106,7 +106,6 @@ const ParsingTimes = (input: string) => {
           timesTerm.push(input.slice(start, i));
           start = i + 6;
           i = i + 5;
-          console.log(input[i])
         } else if (
           input.slice(i, i + 5) === "\\frac" ||
           input.slice(i, i + 5) === "\\sqrt"
@@ -138,12 +137,6 @@ const ParsingTimes = (input: string) => {
           i = j - 1;
         } else if (input.slice(i, i + 4) === "\\div") {
           ///////////////// 나누기 기준 분리 //////////////////////
-          const test = new RegExp(divExp);
-          const words = test.exec(input);
-          if(words !== null){
-              console.log("dd"+words[0])
-          }
-
           opList.push("*");
           var expStart = i - 1;
           var expEnd = i + 3;
@@ -210,26 +203,74 @@ const ParsingTimes = (input: string) => {
             }
             dotStart = j;
           }
-          if (input[i + 4].match(/[0-9]/)) {
-            var k = i + 4;
-            while (!input[k].match(/[a-zA-Z]/)||input[k] !== "("||input[k] !== "{") {
-              if (k === input.length-1) {
+          else if(input[i - 2].match(/[a-zA-Z]/)) {
+            var j = i - 2; //임시 $a.\dot{b}\dot{c}$ 때문
+            while (input[j].match(/[a-zA-Z]/)||input[j].match(/\./)) {
+              if (j === 0) {
                 break;
               }
-              if(input[k] === "\\"){
-                if(input[k+1] !== "d"&&input[k+2] !== "o"){
-                  break;
-                }
-              }
-              k++;
+              j--;
             }
-            dotEnd = k;
+            dotStart = j;
           }
-
+          if(i+7<input.length){
+            if (input[i + 7].match(/[0-9]/)||input[i + 7].match(/[a-zA-Z]/)) {
+              var k = i + 7;
+              while (k < input.length) {
+                if(input[k] === "\\"){
+                  if(input[k+1] === "d"&&input[k+2] === "o"){
+                    k= k+6;
+                    break;
+                  }
+                }
+                k++;
+              }
+              dotEnd = k;
+            }
+            else if(input[i + 7] === "\\" && input[i + 8] === "d"){
+              dotEnd = i+13;
+            }
+          }
+          else{
+            dotEnd = i+6
+          }
           timesTerm.push(input.slice(start, dotStart));
           start = dotStart;
           i = dotEnd-1;
         }
+        /*else if (input.slice(i, i + 6) === "\\cdots") {
+          ///////////////// 순환 소수 기준 분리 //////////////////////
+          opList.push("*");
+          var dotStart = i - 1;
+          var dotEnd = i + 4;
+          var frontBracket = new Array();
+          var backBracket = new Array();
+          if (input[i - 2].match(/[0-9]/)) {
+            var j = i - 2;
+            while (input[j].match(/[0-9]/)||input[j].match(/\./)) {
+              if (j === 0) {
+                break;
+              }
+              j--;
+            }
+            dotStart = j;
+          }
+          else if(input[i - 2].match(/[a-zA-Z]/)) {
+            var j = i - 2; //임시 $a.\dot{b}\dot{c}$ 때문
+            while (input[j].match(/[a-zA-Z]/)||input[j].match(/\./)) {
+              if (j === 0) {
+                break;
+              }
+              j--;
+            }
+            dotStart = j;
+          }
+          dotEnd = i+5;
+
+          timesTerm.push(input.slice(start, dotStart));
+          start = dotStart;
+          i = dotEnd-1;
+        }*/
         else if(input.slice(i, i + 3) === "\\pi"){
           ///////////////// 파이 기준 분리 //////////////////////
           opList.push("*");
@@ -297,7 +338,6 @@ const ParsingTimes = (input: string) => {
         timesTerm.push(input.slice(start, expStart));
         start = expStart;
         i = expEnd;
-        console.log("^"+input[i])
       } else if (input[i] === ")" || input[i] === "}") {
         ///////////////// 괄호-괄호/괄호-문자 분리 //////////////////////
         if (i < input.length - 1) {
@@ -346,10 +386,40 @@ const ParsingTimes = (input: string) => {
         }
         else if (input[i + 1].match(/[a-zA-Z]/)) {
           ///////////////// 문자 - 문자 분리 //////////////////////
-
+          if(i !== 0){
+            if(input[i - 1].match(/\./)){
+            var k = i + 1;
+            while (k < input.length) {
+              if(input[k] === "\\"){
+                /*if(input[k+1] === "c"){
+                  k = k+6;
+                  break;
+                }*/
+                if(input[k+1] === "d"){
+                  k = k+13;
+                }
+                  break;
+              }
+              k++;
+            }
+            var chardotEnd = k;
+            opList.push("*");
+            timesTerm.push(input.slice(start, chardotEnd));
+            start = chardotEnd+1;
+            i = chardotEnd-1
+          }
+          else{
+            opList.push("*");
+            timesTerm.push(input.slice(start, i + 1));
+            start = i + 1; 
+          }
+        }
+        else{
           opList.push("*");
           timesTerm.push(input.slice(start, i + 1));
-          start = i + 1;
+          start = i + 1; 
+        } 
+
         }
         else if(input[i + 1] === "'"){
           ///////////////// 문자 - 문자' 분리 //////////////////////
@@ -428,7 +498,6 @@ const ParsingTimes = (input: string) => {
   } else {
     //////////// '*' 식 tree 구성 //////////////////
     timesTerm.push(input.slice(start));
-    console.log(timesTerm)
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
       if (timesTerm[i] !== "") {
@@ -511,15 +580,31 @@ export const GenVar = (varInput: string) => {
         var splitDecial = decimal[1].split("\\dot")
         var repeatDecm
         if(splitDecial.length > 2){
-          repeatDecm = splitDecial[1]+splitDecial[2]
+          var spliDecialVar1 = null
+          var splitDecialVar2 =  null
+          if(splitDecial[1].match(/\}[0-9]/)){
+            spliDecialVar1 = splitDecial[1].split("}")[0].slice(1)
+            splitDecialVar2 = splitDecial[1].split("}")[1]
+          }
+          else{
+            spliDecialVar1 = splitDecial[1].slice(1,-1)
+          }
+          var spliDecialVar3 = splitDecial[2].slice(1,-1)
+          repeatDecm = spliDecialVar1+splitDecialVar2+spliDecialVar3
+          if(splitDecial[0] === ""){
+            splitDecial[0] = "None"
+          }
+          return { const: [[decimal[0], splitDecial[0], repeatDecm], "decm"] };
         }
         else{
-          repeatDecm = splitDecial[1]
+          var splitDecialInt = splitDecial[1].slice(1,-1)
+          repeatDecm = splitDecialInt
+          return { const: [[decimal[0],"None", repeatDecm], "decm"] }; //소수 없음
         }
-        return { const: [[decimal[0], splitDecial[0], repeatDecm], "decm"] };
+        
         
       }else{
-        return { const: [[decimal[0], decimal[1], "None"], "decm"] };
+        return { const: [[decimal[0], decimal[1], "None"], "decm"] }; //순환 소수 아님
       }
     } else {
       ////////////////// 정수 ///////////////////////
@@ -532,7 +617,43 @@ export const GenVar = (varInput: string) => {
   }
   else {
     ////////////////// 문자 ///////////////////////
-    return { var: varInput };
+    if (varInput.match(/\./)) {
+      var charDecimal = varInput.split(".");
+      if(charDecimal[1].includes("\\dot")){
+        var splitCharDecial = charDecimal[1].split("\\dot");
+        var repeatCharDecm
+        if(splitCharDecial.length > 2){
+          var splitCharDecialVar1
+          var splitCharDecialVar2 = ""
+          if(splitCharDecial[1].match(/\}[a-zA-Z]/)){
+            splitCharDecialVar1 = splitCharDecial[1].split("}")[0].slice(1)
+            splitCharDecialVar2 = splitCharDecial[1].split("}")[1]
+          }
+          else{
+            splitCharDecialVar1 = splitCharDecial[1].slice(1,-1)
+          }
+          var splitCharDecialVar3 = splitCharDecial[2].slice(1,-1)
+          repeatCharDecm = splitCharDecialVar1+splitCharDecialVar2+splitCharDecialVar3
+        }
+        else{
+          var splitCharDecialVar = splitCharDecial[1].slice(1,-1)
+          repeatCharDecm = splitCharDecialVar
+          return { decm: [charDecimal[0], "None", repeatCharDecm]};
+        }
+        if(splitCharDecial[0] === ""){
+          splitCharDecial[0] = "None"
+        }
+        return { decm: [charDecimal[0], splitCharDecial[0], repeatCharDecm]};
+      }
+      else{
+        return { decm: [charDecimal[0], charDecimal[1], "None"]};
+      } 
+    }
+    else{
+      return { var: varInput }; 
+    }
+
+
   }
 };
 
