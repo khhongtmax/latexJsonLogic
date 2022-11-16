@@ -1,8 +1,8 @@
 # latexJsonLogic
 
-##변환 가능 latex 표현
+## 변환 가능 latex 표현
 
-*제곱근 
+* 제곱근 
 ```
 \sqrt{} or \sqrt[]{}
 ```
