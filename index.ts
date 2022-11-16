@@ -18,5 +18,3 @@ export function LatexToJsonLogic(str: any) {
 export function JsonLogicToLatex(str: any) {
   return LogicParsing(str)
 }
-
-console.log(LatexToJsonLogic("$(\\frac{3}{4}\\div 2)\\div 4\\div 5$"))
