@@ -147,6 +147,9 @@ const CreateTerm = (termLogic) => {
             }
             isNumSeq = true;
         }
+        else if (termKey[0] === "decm") {
+            varExp += CreateDecm(term);
+        }
         else if (termKey[0] === "/") {
             varExp += CreateFrac(term);
             isNumSeq = false;
@@ -188,8 +191,8 @@ const CreateSqrt = (sqrtLogic) => {
     for (var i = 0; i < sqrtLogic[key].length; i++) {
         plusExp.push(CreateExpression(sqrtLogic[key][i]));
     }
-    if (plusExp[1] === "1") {
-        return `\\sqrt[]{${plusExp[0]}}`;
+    if (plusExp[1] === "2") {
+        return `\\sqrt{${plusExp[0]}}`;
     }
     else {
         return `\\sqrt[${plusExp[1]}]{${plusExp[0]}}`;
@@ -246,23 +249,75 @@ const CreateConst = (constLogic) => {
             constLogic[key][0][1] === null) {
             constString = constLogic[key][0][0];
             constString += ".";
-            constString += "\\dot";
-            constString += constLogic[key][0][2];
+            for (var i = 0; i < constLogic[key][0][2].length - 1; i++) {
+                if (i === 0) {
+                    constString += "\\dot{" + constLogic[key][0][2][i] + "}";
+                }
+                else {
+                    constString += constLogic[key][0][2][i];
+                }
+            }
+            constString += "\\dot{";
+            constString += constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
         }
         else {
             constString = constLogic[key][0][0];
             constString += ".";
             constString += constLogic[key][0][1];
-            constString += "\\dot";
-            for (var i = 0; i < constLogic[key][0][2].length; i++) {
-                constString += constLogic[key][0][2][i];
+            for (var i = 0; i < constLogic[key][0][2].length - 1; i++) {
+                if (i === 0) {
+                    constString += "\\dot{" + constString[key][0][2][i] + "}";
+                }
+                else {
+                    constString += constLogic[key][0][2][i];
+                }
             }
-            constString += "\\dot";
-            constString += constLogic[key][0][2][constLogic[key][0][2].length - 1];
+            constString += "\\dot{";
+            constString += constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
         }
     }
     else if (constLogic[key][1] === "special") {
         constString = "\\pi ";
     }
     return constString;
+};
+// 소수
+const CreateDecm = (decmLogic) => {
+    var key = "decm";
+    var decmString = null;
+    if (decmLogic[key][2] === "None" || decmLogic[key][2] === null) {
+        decmString = decmLogic[key][0];
+        decmString += ".";
+        decmString += decmLogic[key][1];
+    }
+    else if (decmLogic[key][1] === "None" || decmLogic[key][1] === null) {
+        decmString = decmLogic[key][0];
+        decmString += ".";
+        for (var i = 0; i < decmLogic[key][2].length - 1; i++) {
+            if (i === 0) {
+                decmString += "\\dot{" + decmLogic[key][2][i] + "}";
+            }
+            else {
+                decmString += decmLogic[key][2][i];
+            }
+        }
+        decmString += "\\dot{";
+        decmString += decmLogic[key][2][decmLogic[key][2].length - 1] + "}";
+    }
+    else {
+        decmString = decmLogic[key][0];
+        decmString += ".";
+        decmString += decmLogic[key][1];
+        for (var i = 0; i < decmLogic[key][2].length - 1; i++) {
+            if (i === 0) {
+                decmString += "\\dot{" + decmLogic[key][2][i] + "}";
+            }
+            else {
+                decmString += decmLogic[key][2][i];
+            }
+        }
+        decmString += "\\dot{";
+        decmString += decmLogic[key][2][decmLogic[key][2].length - 1] + "}";
+    }
+    return decmString;
 };
