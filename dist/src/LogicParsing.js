@@ -114,7 +114,7 @@ const CreateExpression = (expLogic) => {
         var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
         plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
     }
-    var findReplaceCharPlusOne = plusExp.match(/1{?[a-zA-Z]}?/);
+    var findReplaceCharPlusOne = plusExp.match(/(?<![0-9\.])1{?[a-zA-Z]}?/);
     if (findReplaceCharPlusOne != null) {
         var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
         plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
@@ -131,7 +131,7 @@ const CreateTerm = (termLogic) => {
         var term = termLogic[key][i];
         if (termKey[0] === "var") {
             varExp += CreateVar(term);
-            isNumSeq = false;
+            isNumSeq = true;
         }
         else if (termKey[0] === "const") {
             if (isNumSeq === true) {
@@ -148,7 +148,13 @@ const CreateTerm = (termLogic) => {
             isNumSeq = true;
         }
         else if (termKey[0] === "decm") {
-            varExp += CreateDecm(term);
+            if (isNumSeq === true) {
+                varExp += "\\times" + CreateDecm(term);
+            }
+            else {
+                varExp += CreateDecm(term);
+            }
+            isNumSeq = true;
         }
         else if (termKey[0] === "/") {
             varExp += CreateFrac(term);
@@ -258,7 +264,8 @@ const CreateConst = (constLogic) => {
                 }
             }
             constString += "\\dot{";
-            constString += constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
+            constString +=
+                constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
         }
         else {
             constString = constLogic[key][0][0];
@@ -273,7 +280,8 @@ const CreateConst = (constLogic) => {
                 }
             }
             constString += "\\dot{";
-            constString += constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
+            constString +=
+                constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
         }
     }
     else if (constLogic[key][1] === "special") {

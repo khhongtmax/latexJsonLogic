@@ -116,7 +116,7 @@ const CreateExpression = (expLogic: any) => {
     var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
     plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
   }
-  var findReplaceCharPlusOne = plusExp.match(/1{?[a-zA-Z]}?/);
+  var findReplaceCharPlusOne = plusExp.match(/(?<![0-9\.])1{?[a-zA-Z]}?/);
   if (findReplaceCharPlusOne != null) {
     var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
     plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
@@ -136,7 +136,7 @@ const CreateTerm = (termLogic: any) => {
     var term = termLogic[key][i];
     if (termKey[0] === "var") {
       varExp += CreateVar(term);
-      isNumSeq = false;
+      isNumSeq = true;
     } else if (termKey[0] === "const") {
       if (isNumSeq === true) {
         if (termLogic[key][i]["const"][1] !== "special") {
@@ -149,7 +149,12 @@ const CreateTerm = (termLogic: any) => {
       }
       isNumSeq = true;
     } else if (termKey[0] === "decm") {
-      varExp += CreateDecm(term);
+      if (isNumSeq === true) {
+        varExp += "\\times" + CreateDecm(term);
+      } else {
+        varExp += CreateDecm(term);
+      }
+      isNumSeq = true;
     } else if (termKey[0] === "/") {
       varExp += CreateFrac(term);
       isNumSeq = false;
@@ -247,32 +252,30 @@ const CreateConst = (constLogic: any) => {
     ) {
       constString = constLogic[key][0][0];
       constString += ".";
-      for (var i = 0; i < constLogic[key][0][2].length-1; i++) {
+      for (var i = 0; i < constLogic[key][0][2].length - 1; i++) {
         if (i === 0) {
-          constString += "\\dot{" + constLogic[key][0][2][i]+"}";
-        }
-        else{
+          constString += "\\dot{" + constLogic[key][0][2][i] + "}";
+        } else {
           constString += constLogic[key][0][2][i];
         }
-        
       }
       constString += "\\dot{";
-      constString += constLogic[key][0][2][constLogic[key][0][2].length - 1]+"}";
+      constString +=
+        constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
     } else {
       constString = constLogic[key][0][0];
       constString += ".";
       constString += constLogic[key][0][1];
-      for (var i = 0; i < constLogic[key][0][2].length-1; i++) {
+      for (var i = 0; i < constLogic[key][0][2].length - 1; i++) {
         if (i === 0) {
-          constString += "\\dot{" + constString[key][0][2][i]+"}";
-        }
-        else{
+          constString += "\\dot{" + constString[key][0][2][i] + "}";
+        } else {
           constString += constLogic[key][0][2][i];
         }
-        
       }
       constString += "\\dot{";
-      constString += constLogic[key][0][2][constLogic[key][0][2].length - 1]+"}";
+      constString +=
+        constLogic[key][0][2][constLogic[key][0][2].length - 1] + "}";
     }
   } else if (constLogic[key][1] === "special") {
     constString = "\\pi ";
@@ -291,11 +294,10 @@ const CreateDecm = (decmLogic: any) => {
   } else if (decmLogic[key][1] === "None" || decmLogic[key][1] === null) {
     decmString = decmLogic[key][0];
     decmString += ".";
-    for (var i = 0; i < decmLogic[key][2].length-1; i++) {
+    for (var i = 0; i < decmLogic[key][2].length - 1; i++) {
       if (i === 0) {
-        decmString += "\\dot{" + decmLogic[key][2][i]+"}";
-      }
-      else{
+        decmString += "\\dot{" + decmLogic[key][2][i] + "}";
+      } else {
         decmString += decmLogic[key][2][i];
       }
     }
@@ -305,11 +307,10 @@ const CreateDecm = (decmLogic: any) => {
     decmString = decmLogic[key][0];
     decmString += ".";
     decmString += decmLogic[key][1];
-    for (var i = 0; i < decmLogic[key][2].length-1; i++) {
+    for (var i = 0; i < decmLogic[key][2].length - 1; i++) {
       if (i === 0) {
-        decmString += "\\dot{" + decmLogic[key][2][i]+"}";
-      }
-      else{
+        decmString += "\\dot{" + decmLogic[key][2][i] + "}";
+      } else {
         decmString += decmLogic[key][2][i];
       }
     }
