@@ -119,7 +119,7 @@ const CreateExpression = (expLogic) => {
         var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
         plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
     }
-    plusExp = plusExp.replace("+-", "-");
+    plusExp = plusExp.replace(/\+-/g, "-");
     return plusExp;
 };
 const CreateTerm = (termLogic) => {
