@@ -44,4 +44,3 @@ function JsonLogicToLatex(str) {
     return (0, LogicParsing_1.LogicParsing)(str);
 }
 exports.JsonLogicToLatex = JsonLogicToLatex;
-console.log(JsonLogicToLatex(LatexToJsonLogic(`$a-b-c$`)));

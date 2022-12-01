@@ -106,20 +106,24 @@ const CreateExpression = (expLogic) => {
         plusExpArray.push(CreateTerm(expLogic[key][i]));
     }
     var plusExp = plusExpArray.join("+");
-    plusExp = plusExp.replace("-1(", "-(");
-    plusExp = plusExp.replace("-1\\sqrt", "-\\sqrt");
-    plusExp = plusExp.replace("-1\\frac", "-\\frac");
-    var findReplaceCharMinusOne = plusExp.match(/-1{?[a-zA-Z]}?/);
-    if (findReplaceCharMinusOne != null) {
-        var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
-        plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
+    plusExp = plusExp.replaceAll("-1(", "-(");
+    plusExp = plusExp.replaceAll("-1\\sqrt", "-\\sqrt");
+    plusExp = plusExp.replaceAll("-1\\frac", "-\\frac");
+    while (plusExp.match(/-1{?[a-zA-Z]}?/)) {
+        var findReplaceCharMinusOne = plusExp.match(/-1{?[a-zA-Z]}?/);
+        if (findReplaceCharMinusOne != null) {
+            var replaceCharMinusOne = findReplaceCharMinusOne[0].split("-1");
+            plusExp = plusExp.replace(/-1{?[a-zA-Z]}?/, "-" + replaceCharMinusOne[1]);
+        }
     }
-    var findReplaceCharPlusOne = plusExp.match(/(?<![0-9\.])1{?[a-zA-Z]}?/);
-    if (findReplaceCharPlusOne != null) {
-        var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
-        plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
+    while (plusExp.match(/(?<![0-9\.])1{?[a-zA-Z]}?/)) {
+        var findReplaceCharPlusOne = plusExp.match(/(?<![0-9\.])1{?[a-zA-Z]}?/);
+        if (findReplaceCharPlusOne != null) {
+            var replaceCharPlusOne = findReplaceCharPlusOne[0].split("1");
+            plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
+        }
     }
-    plusExp = plusExp.replace(/\+-/g, "-");
+    plusExp = plusExp.replaceAll("+-", "-");
     return plusExp;
 };
 const CreateTerm = (termLogic) => {
