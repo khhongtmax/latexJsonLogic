@@ -109,6 +109,7 @@ const CreateExpression = (expLogic: any) => {
   var plusExp = plusExpArray.join("+");
 
   plusExp = plusExp.replaceAll("-1(", "-(");
+  plusExp = plusExp.replaceAll("1(", "(");
   plusExp = plusExp.replaceAll("-1\\sqrt", "-\\sqrt");
   plusExp = plusExp.replaceAll("-1\\frac", "-\\frac");
   while (plusExp.match(/-1{?[a-zA-Z]}?/)) {
