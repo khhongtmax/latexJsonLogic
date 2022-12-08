@@ -108,10 +108,52 @@ const CreateExpression = (expLogic: any) => {
 
   var plusExp = plusExpArray.join("+");
 
+  while (plusExp.match(/[0-9]\\times([a-zA-Z]'?)/)) {
+    var findReplace = plusExp.match(/[0-9]\\times([a-zA-Z]'?)/);
+    if (findReplace != null) {
+      var splitArray = findReplace[0].split("\\times");
+      plusExp = plusExp.replace(/[0-9]\\times([a-zA-Z]'?)/, splitArray[0]+splitArray[1]);
+    }
+  } //숫자 
+
+  while (plusExp.match(/[0-9]\\times(\\sqrt)/)) {
+    var findReplace = plusExp.match(/[0-9]\\times(\\sqrt)/);
+    if (findReplace != null) {
+      var splitArray = findReplace[0].split("\\times");
+      plusExp = plusExp.replace(/[0-9]\\times(\\sqrt)/, splitArray[0]+splitArray[1]);
+    }
+  } //숫자 
+
+  while (plusExp.match(/[0-9]\\times(\\pi)/)) {
+    var findReplace = plusExp.match(/[0-9]\\times(\\pi)/);
+    if (findReplace != null) {
+      var splitArray = findReplace[0].split("\\times");
+      plusExp = plusExp.replace(/[0-9]\\times(\\pi)/, splitArray[0]+splitArray[1]);
+    }
+  } //숫자 
+
+  while (plusExp.match(/[a-zA-Z]'?\\times[a-zA-Z]'?/)) {
+    var findReplace = plusExp.match(/[a-zA-Z]'?\\times[a-zA-Z]'?/);
+    if (findReplace != null) {
+      var splitArray = findReplace[0].split("\\times");
+      plusExp = plusExp.replace(/[a-zA-Z]'?\\times[a-zA-Z]'?/, splitArray[0]+splitArray[1]);
+    }
+  }//문자
+
+  while (plusExp.match(/\\frac{.*}{.*}\\times[a-zA-Z]'?/)) {
+    var findReplace = plusExp.match(/\\frac{.*}{.*}\\times[a-zA-Z]'?/);
+    if (findReplace != null) {
+      var splitArray = findReplace[0].split("\\times");
+      plusExp = plusExp.replace(/\\frac{.*}{.*}\\times[a-zA-Z]'?/, splitArray[0]+splitArray[1]);
+    }
+  }//문자
+
+  plusExp = plusExp.replaceAll("\\times(", "(");
   plusExp = plusExp.replaceAll("-1(", "-(");
   plusExp = plusExp.replaceAll("1(", "(");
   plusExp = plusExp.replaceAll("-1\\sqrt", "-\\sqrt");
   plusExp = plusExp.replaceAll("-1\\frac", "-\\frac");
+
   while (plusExp.match(/-1{?[a-zA-Z]}?/)) {
     var findReplaceCharMinusOne = plusExp.match(/-1{?[a-zA-Z]}?/);
     if (findReplaceCharMinusOne != null) {
@@ -127,7 +169,12 @@ const CreateExpression = (expLogic: any) => {
       plusExp = plusExp.replace(/1{?[a-zA-Z]}?/, replaceCharPlusOne[1]);
     }
   }
-  plusExp = plusExp.replaceAll("+-", "-");
+  plusExp = plusExp.replaceAll("\\times+-", "-");
+  plusExp = plusExp.replaceAll("\\times+", "+");
+  if(plusExp.slice(plusExp.length - 6,plusExp.length) === "\\times"){
+    plusExp = plusExp.slice(0,plusExp.length - 6);
+  }
+  plusExp = plusExp.replaceAll("\\times", "\\times ");
 
   return plusExp;
 };
@@ -140,10 +187,10 @@ const CreateTerm = (termLogic: any) => {
     var termKey = Object.getOwnPropertyNames(termLogic[key][i]);
     var term = termLogic[key][i];
     if (termKey[0] === "var") {
-      varExp += CreateVar(term);
+      varExp += CreateVar(term)+"\\times";
       isNumSeq = true;
     } else if (termKey[0] === "const") {
-      if (isNumSeq === true) {
+      /*if (isNumSeq === true) {
         if (termLogic[key][i]["const"][1] !== "special") {
           varExp += "\\times" + CreateConst(term);
         } else {
@@ -151,17 +198,19 @@ const CreateTerm = (termLogic: any) => {
         }
       } else {
         varExp += CreateConst(term);
-      }
+      }*/
+      varExp += CreateConst(term)+"\\times";
       isNumSeq = true;
     } else if (termKey[0] === "decm") {
-      if (isNumSeq === true) {
+      /*if (isNumSeq === true) {
         varExp += "\\times" + CreateDecm(term);
       } else {
         varExp += CreateDecm(term);
-      }
+      }*/
+      varExp += CreateDecm(term)+"\\times";
       isNumSeq = true;
     } else if (termKey[0] === "/") {
-      varExp += CreateFrac(term);
+      varExp += CreateFrac(term)+"\\times";
       isNumSeq = false;
     } else if (termKey[0] === "+") {
       /*if(CreateExpression(term).match(/^[0-9]*$/)){
@@ -170,13 +219,13 @@ const CreateTerm = (termLogic: any) => {
       else{
         varExp += "(" + CreateExpression(term) + ")";
       }*/
-      varExp += "(" + CreateExpression(term) + ")";
+      varExp += "(" + CreateExpression(term) + ")"+"\\times";
       isNumSeq = false;
     } else if (termKey[0] === "root") {
-      varExp += CreateSqrt(term);
+      varExp += CreateSqrt(term)+"\\times";
       isNumSeq = false;
     } else if (termKey[0] === "pow") {
-      varExp += CreatePow(term);
+      varExp += CreatePow(term)+"\\times";
       isNumSeq = false;
     }
   }
