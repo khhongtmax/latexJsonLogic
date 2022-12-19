@@ -106,11 +106,11 @@ const CreateExpression = (expLogic) => {
         plusExpArray.push(CreateTerm(expLogic[key][i]));
     }
     var plusExp = plusExpArray.join("+");
-    while (plusExp.match(/[0-9]\\times([a-zA-Z]'?)/)) {
-        var findReplace = plusExp.match(/[0-9]\\times([a-zA-Z]'?)/);
+    while (plusExp.match(/[0-9]\\times({?[a-zA-Z]'?)/)) {
+        var findReplace = plusExp.match(/[0-9]\\times({?[a-zA-Z]'?)/);
         if (findReplace != null) {
             var splitArray = findReplace[0].split("\\times");
-            plusExp = plusExp.replace(/[0-9]\\times([a-zA-Z]'?)/, splitArray[0] + splitArray[1]);
+            plusExp = plusExp.replace(/[0-9]\\times({?[a-zA-Z]'?)/, splitArray[0] + splitArray[1]);
         }
     } //숫자 
     while (plusExp.match(/[0-9]\\times(\\sqrt)/)) {
