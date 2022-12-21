@@ -127,18 +127,18 @@ const CreateExpression = (expLogic) => {
             plusExp = plusExp.replace(/[0-9]\\times(\\pi)/, splitArray[0] + splitArray[1]);
         }
     } //숫자 
-    while (plusExp.match(/[a-zA-Z]'?\\times[a-zA-Z]'?/)) {
-        var findReplace = plusExp.match(/[a-zA-Z]'?\\times[a-zA-Z]'?/);
+    while (plusExp.match(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/)) {
+        var findReplace = plusExp.match(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/);
         if (findReplace != null) {
             var splitArray = findReplace[0].split("\\times");
-            plusExp = plusExp.replace(/[a-zA-Z]'?\\times[a-zA-Z]'?/, splitArray[0] + splitArray[1]);
+            plusExp = plusExp.replace(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/, splitArray[0] + splitArray[1]);
         }
     } //문자
-    while (plusExp.match(/\\frac{.*}{.*}\\times[a-zA-Z]'?/)) {
-        var findReplace = plusExp.match(/\\frac{.*}{.*}\\times[a-zA-Z]'?/);
+    while (plusExp.match(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/)) {
+        var findReplace = plusExp.match(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/);
         if (findReplace != null) {
             var splitArray = findReplace[0].split("\\times");
-            plusExp = plusExp.replace(/\\frac{.*}{.*}\\times[a-zA-Z]'?/, splitArray[0] + splitArray[1]);
+            plusExp = plusExp.replace(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/, splitArray[0] + splitArray[1]);
         }
     } //문자
     plusExp = plusExp.replaceAll("\\times(", "(");
