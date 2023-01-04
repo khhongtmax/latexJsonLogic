@@ -9,7 +9,7 @@ export const DetermineType = (input: string) => {
   var regularExpression =
     /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$[^\$\\]*(?:\\.[^\$\\]*)*\$/g; // latex 문법으로 표기 되었는지
   var blockRegularExpression = /\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]/g;
-
+  ////////////////// 타입 판단은 각 식에서 특징적인 문법을 기준으로 판단 /////////////////////////////////
   if(splitLatex.includes("\\begin{cases}")){
     type = "systemEquation"; // 연립방정식
     jsonLogicResult = DivideSystemEquation(splitLatex);
@@ -41,13 +41,13 @@ export const DetermineType = (input: string) => {
   return JSON.stringify(jsonLogicResult);
 };
 
-/////////////// 비례식 분리 ///////////////////
+/////////////// 비례식 양변 분리 ///////////////////
 const DivideProportion = (proportion: string) => {
 
-  let equations = proportion.split("=");
+  let equations = proportion.split("="); // 등식 분리
 
   
-  var proportion1 = equations[0].split(":");
+  var proportion1 = equations[0].split(":"); // 비례식 기호 기준 분리
   var proportion2 = equations[1].split(":");  
 
   const proportionLogic = {
@@ -59,17 +59,17 @@ const DivideProportion = (proportion: string) => {
 /////////////// 연립 방정식 분리 ///////////////////
 const DivideSystemEquation = (systemEquation: string) => {
 
-  let equations = systemEquation.split("\\begin{cases}");
+  let equations = systemEquation.split("\\begin{cases}"); 
   equations = equations[1].split("\\end{cases}");
   var equationList = [];
-  equationList = equations[0].split("\\\\"); 
+  equationList = equations[0].split("\\\\"); // 연립 방정식 내부의 방정식들 분리
 
   const systemEqualLogic = {
     "system": equationList.map(DeterminExpression),
   };
   return systemEqualLogic;
 };
-/////////////// 연립 방정식 내부 식 파싱 ///////////////////
+/////////////// 연립 방정식 내부 방정식들 타입 판단 ///////////////////
 const DeterminExpression = (expression:string) => {
   var logicResult;
   if(expression.includes(":")){
@@ -105,7 +105,7 @@ const DivideEquation = (equation: string) => {
 /////////////// 부등식 양변 분리 ///////////////////
 const DivideInequality = (inequality: string) => {
   let mark = new Array<string>();
-  ///////////// 부등식 기호 parsing ///////////////
+  ///////////// 부등식 기호 저장 ///////////////
   for (let i = 0; i < inequality.length; i++) {
     if (inequality[i] === "<" || inequality[i] === ">") {
       if(inequality[i + 1] === "="){
@@ -126,9 +126,9 @@ const DivideInequality = (inequality: string) => {
       }
     }
   }   
-  ///////////// 부등식 식 parsing ///////////////
+  ///////////// 부등식 식 분리 ///////////////
   if (mark.length > 1) {
-    //////////////// 복합 부등식 //////////////////////////
+    //////////////// 복합 부등식 처리//////////////////////////
     const leftExpression = inequality.slice(0, inequality.indexOf(mark[0]));
     const middleExpression = inequality.slice(
       inequality.indexOf(mark[0])+mark[0].length,
@@ -158,7 +158,7 @@ const DivideInequality = (inequality: string) => {
     };
     return complexInequalLogic;
   } else {
-    //////////////// 부등식 //////////////////////////
+    //////////////// 부등식 처리//////////////////////////
     const leftExpression = inequality.split(mark[0])[0];
     const rightExpression = inequality.split(mark[0])[1];
     for (let i = 0; i < mark.length; i++) {
