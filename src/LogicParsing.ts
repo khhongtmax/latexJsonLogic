@@ -1,3 +1,4 @@
+/////////////////////////// 최종 Latex 표현 생성 함수 ///////////////////////////
 export const LogicParsing = (logic: string) => {
   var latexResult;
 
@@ -8,17 +9,17 @@ export const LogicParsing = (logic: string) => {
 
   var type = Object.getOwnPropertyNames(jsonLogic);
 
-  if (type[0] === ":") {
+  if (type[0] === ":") { //비례식 
     var expressions = jsonLogic[type[0]];
     latexResult = CreateProportion(expressions[0]);
-  } else if (type[0] === "system") {
+  } else if (type[0] === "system") { //연립 방정식 
     var expressions = jsonLogic[type[0]];
     var systemExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
       systemExp.push(LogicParsing(expressions[i]).slice(1, -1));
     }
     latexResult = "\\begin{cases}" + systemExp.join("\\\\") + "\\end{cases}";
-  } else if (type[0] === "=") {
+  } else if (type[0] === "=") { //등식
     var expressions = jsonLogic[type[0]];
     var equalExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
@@ -30,7 +31,7 @@ export const LogicParsing = (logic: string) => {
     type[0] === "<" ||
     type[0] === ">=" ||
     type[0] === "<="
-  ) {
+  ) {  //부등식
     var expressions = jsonLogic[type[0]];
     var inequalExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
@@ -42,7 +43,7 @@ export const LogicParsing = (logic: string) => {
       type[0] = "\\le ";
     }
     latexResult = inequalExp.join(type[0]);
-  } else if (type[0] === "comp") {
+  } else if (type[0] === "comp") {  //연립 부등식
     var mark = jsonLogic[type[0]][0];
     var expressions = jsonLogic[type[0]][1];
     var inequalExp = new Array();
@@ -58,7 +59,7 @@ export const LogicParsing = (logic: string) => {
     }
     latexResult =
       inequalExp[0] + mark[0] + inequalExp[1] + mark[1] + inequalExp[2];
-  } else if (type[0] === "point") {
+  } else if (type[0] === "point") { //좌표
     var expressions = jsonLogic[type[0]];
     var pointExp = new Array();
     for (var i = 0; i < expressions.length; i++) {
@@ -69,13 +70,13 @@ export const LogicParsing = (logic: string) => {
       }
     }
     latexResult = "(" + pointExp.join(",") + ")";
-  } else {
+  } else { //일반식
     latexResult = CreateExpression(jsonLogic);
   }
 
   return "$" + latexResult + "$";
 };
-
+/////////////////////////// 비례식 Latex 표현 생성 함수 ///////////////////////////
 const CreateProportion = (expLogic: any) => {
   var expressions = expLogic["="];
 
@@ -98,7 +99,7 @@ const CreateProportion = (expLogic: any) => {
 
   return proportionResult;
 };
-
+///////////////////////////  key = '+' 인 tree -> 더하기식 Latex 표현 생성 함수 ///////////////////////////
 const CreateExpression = (expLogic: any) => {
   var key = "+";
   var plusExpArray = new Array();
@@ -107,14 +108,14 @@ const CreateExpression = (expLogic: any) => {
   }
 
   var plusExp = plusExpArray.join("+");
-
+  /////////////////////////// 기본 plusExp의 항마다 //times가 있기 때문에 상황에 따라 //times 생략하는 과정 ///////////////////////////
   while (plusExp.match(/[0-9]\\times({?[a-zA-Z]'?)/)) {
     var findReplace = plusExp.match(/[0-9]\\times({?[a-zA-Z]'?)/);
     if (findReplace != null) {
       var splitArray = findReplace[0].split("\\times");
       plusExp = plusExp.replace(/[0-9]\\times({?[a-zA-Z]'?)/, splitArray[0]+splitArray[1]);
     }
-  } //숫자 
+  } //숫자 - \\times - 문자
 
   while (plusExp.match(/[0-9]\\times(\\sqrt)/)) {
     var findReplace = plusExp.match(/[0-9]\\times(\\sqrt)/);
@@ -122,7 +123,7 @@ const CreateExpression = (expLogic: any) => {
       var splitArray = findReplace[0].split("\\times");
       plusExp = plusExp.replace(/[0-9]\\times(\\sqrt)/, splitArray[0]+splitArray[1]);
     }
-  } //숫자 
+  } //숫자 - \\times - 제곱근
 
   while (plusExp.match(/[0-9]\\times(\\pi)/)) {
     var findReplace = plusExp.match(/[0-9]\\times(\\pi)/);
@@ -130,7 +131,7 @@ const CreateExpression = (expLogic: any) => {
       var splitArray = findReplace[0].split("\\times");
       plusExp = plusExp.replace(/[0-9]\\times(\\pi)/, splitArray[0]+splitArray[1]);
     }
-  } //숫자 
+  } //숫자 - \\times - 파이
 
   while (plusExp.match(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/)) {
     var findReplace = plusExp.match(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/);
@@ -138,7 +139,7 @@ const CreateExpression = (expLogic: any) => {
       var splitArray = findReplace[0].split("\\times");
       plusExp = plusExp.replace(/[a-zA-Z]'?\\times{?[a-zA-Z]'?/, splitArray[0]+splitArray[1]);
     }
-  }//문자
+  }//문자 - \\times - 문자
 
   while (plusExp.match(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/)) {
     var findReplace = plusExp.match(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/);
@@ -146,9 +147,10 @@ const CreateExpression = (expLogic: any) => {
       var splitArray = findReplace[0].split("\\times");
       plusExp = plusExp.replace(/\\frac{.*}{.*}\\times{?[a-zA-Z]'?/, splitArray[0]+splitArray[1]);
     }
-  }//문자
+  }//분수 - \\times - 문자 
+  plusExp = plusExp.replaceAll("\\times(", "("); // \\times - (
 
-  plusExp = plusExp.replaceAll("\\times(", "(");
+  /////////////////////////// -1이 곱해진 표현에서 1 생략하는 과정 (-1(a) -> -(a)) ///////////////////////////
   plusExp = plusExp.replaceAll("-1(", "-(");
   plusExp = plusExp.replaceAll("1(", "(");
   plusExp = plusExp.replaceAll("-1\\sqrt", "-\\sqrt");
@@ -174,51 +176,31 @@ const CreateExpression = (expLogic: any) => {
   if(plusExp.slice(plusExp.length - 6,plusExp.length) === "\\times"){
     plusExp = plusExp.slice(0,plusExp.length - 6);
   }
-  plusExp = plusExp.replaceAll("\\times", "\\times ");
+  plusExp = plusExp.replaceAll("\\times", "\\times "); // \\times기호 뒤에 공백 있어야 함
 
   return plusExp;
 };
-
+/////////////////////////// key = '*' 인 tree -> 곱하기(\\times)식 Latex 표현 생성 함수 ///////////////////////////
 const CreateTerm = (termLogic: any) => {
   var key = "*";
   var varExp = "";
   var isNumSeq = false;
-  for (var i = 0; i < termLogic[key].length; i++) {
+  for (var i = 0; i < termLogic[key].length; i++) { /////////////////////////// key = '*' 인 tree 안의 tree key 판단 ///////////////////////////
     var termKey = Object.getOwnPropertyNames(termLogic[key][i]);
     var term = termLogic[key][i];
     if (termKey[0] === "var") {
       varExp += CreateVar(term)+"\\times";
       isNumSeq = true;
-    } else if (termKey[0] === "const") {
-      /*if (isNumSeq === true) {
-        if (termLogic[key][i]["const"][1] !== "special") {
-          varExp += "\\times" + CreateConst(term);
-        } else {
-          varExp += CreateConst(term);
-        }
-      } else {
-        varExp += CreateConst(term);
-      }*/
+    } else if (termKey[0] === "const") { 
       varExp += CreateConst(term)+"\\times";
       isNumSeq = true;
     } else if (termKey[0] === "decm") {
-      /*if (isNumSeq === true) {
-        varExp += "\\times" + CreateDecm(term);
-      } else {
-        varExp += CreateDecm(term);
-      }*/
       varExp += CreateDecm(term)+"\\times";
       isNumSeq = true;
     } else if (termKey[0] === "/") {
       varExp += CreateFrac(term)+"\\times";
       isNumSeq = false;
     } else if (termKey[0] === "+") {
-      /*if(CreateExpression(term).match(/^[0-9]*$/)){
-        varExp += "\\times" + CreateExpression(term);
-      }
-      else{
-        varExp += "(" + CreateExpression(term) + ")";
-      }*/
       varExp += "(" + CreateExpression(term) + ")"+"\\times";
       isNumSeq = false;
     } else if (termKey[0] === "root") {
@@ -232,7 +214,7 @@ const CreateTerm = (termLogic: any) => {
 
   return varExp;
 };
-//분수
+///////////////////////////  key = '/' 인 tree -> 분수식 Latex 표현 생성 함수 ///////////////////////////
 const CreateFrac = (fracLogic: any) => {
   var key = "/";
   var plusExp = new Array();
@@ -242,7 +224,7 @@ const CreateFrac = (fracLogic: any) => {
 
   return `\\frac{${plusExp[0]}}{${plusExp[1]}}`;
 };
-//제곱근
+///////////////////////////  key = 'root' 인 tree -> 제곱근식 Latex 표현 생성 함수 ///////////////////////////
 const CreateSqrt = (sqrtLogic: any) => {
   var key = "root";
   var plusExp = new Array();
@@ -250,13 +232,13 @@ const CreateSqrt = (sqrtLogic: any) => {
     plusExp.push(CreateExpression(sqrtLogic[key][i]));
   }
 
-  if (plusExp[1] === "2") {
+  if (plusExp[1] === "2") { 
     return `\\sqrt{${plusExp[0]}}`;
   } else {
     return `\\sqrt[${plusExp[1]}]{${plusExp[0]}}`;
   }
 };
-//제곱
+///////////////////////////  key = 'pow' 인 tree -> 제곱식 Latex 표현 생성 함수 ///////////////////////////
 const CreatePow = (powLogic: any) => {
   var key = "pow";
   var plusExp = new Array();
@@ -265,9 +247,9 @@ const CreatePow = (powLogic: any) => {
   }
 
   if (powLogic[key][0]["+"].length === 1) {
-    ////////////// base 식이 + 로 연결 (다항식)/////////////////////////////
+    ////////////// base 식이 + 로 연결 -> (다항식)^m 일 경우 /////////////////////////////
     if (powLogic[key][0]["+"][0]["*"].length === 1) {
-      ////////////// base 식에 곱해진것 없음 /////////////////////////////
+      ////////////// base 식에 곱해진것 없음 -> n^m 일 경우 /////////////////////////////
       var powKey = Object.getOwnPropertyNames(powLogic[key][0]["+"][0]["*"][0]);
       if (powKey[0] === "const" || powKey[0] === "var") {
         ////////////// base 식이 단독 문자 or 숫자 /////////////////////////////
@@ -282,14 +264,14 @@ const CreatePow = (powLogic: any) => {
     return `(${plusExp[0]})^{${plusExp[1]}}`;
   }
 };
-// 변수
+///////////////////////////  key = 'var' 인 tree -> 변수 Latex 표현 생성 함수 ///////////////////////////
 const CreateVar = (varLogic: any) => {
   var key = "var";
   var varString = varLogic[key];
 
   return varString;
 };
-// 상수
+///////////////////////////  key = 'const' 인 tree (정수,소수,순환소수,파이) -> 상수 Latex 표현 생성 함수 ///////////////////////////
 const CreateConst = (constLogic: any) => {
   var key = "const";
   var constString = null;
@@ -337,7 +319,7 @@ const CreateConst = (constLogic: any) => {
 
   return constString;
 };
-// 소수
+///////////////////////////  key = 'decm' 인 tree -> 소수 Latex 표현 생성 함수 ///////////////////////////
 const CreateDecm = (decmLogic: any) => {
   var key = "decm";
   var decmString = null;
