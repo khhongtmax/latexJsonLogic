@@ -1,10 +1,12 @@
 import {divExp} from "./RegExpType";
+
+/////////////////////////// key = '+' 인 tree 생성 함수 ///////////////////////////
 export const ParsingPlus = (input: string):any => {
   let plusTree = null;
-  let plusTerm = new Array(); //'+' 기준으로 분리된 식
+  let plusTerm = new Array(); //'+' 기준으로 분리된 식 저장
   var isTimes:boolean = false;
   let opList = new Array(); //'+' 갯수 대로 저장
-  let pmList = new Array(); //'+-' 갯수 대로 저장
+  let pmList = new Array(); //'+-' 갯수 대로 저장 -> 제대로 작동 하지 않음
   var bracket = new Array(); // 괄호 판단용 스택
   var start = 0; // 식 분리용 구분자
   for (var i = 0; i < input.length; i++) {
@@ -19,9 +21,10 @@ export const ParsingPlus = (input: string):any => {
     if (input[i] === "}") {
       bracket.pop();
     }
-    ////////////////////////////////
-   
-    if(input.slice(i,i+3) === "\\pm" && bracket.length === 0){
+    ////////////////////////////////////////
+
+   //bracket.length === 0 -> 괄호 바깥의 식일 경우
+    if(input.slice(i,i+3) === "\\pm" && bracket.length === 0){ 
       pmList.push("\\pm");
       plusTerm.push(input.slice(start, i));
       start = i + 3;
@@ -52,6 +55,7 @@ export const ParsingPlus = (input: string):any => {
     return { "+": [ParsingTimes(input)] };
   }
   else if(pmList.length !== 0){
+    //////////// '+-' 식 tree 구성 -> 작동 하지 않음 //////////////////
     plusTerm.push(input.slice(start));
     var plusTermList = new Array();
     for (var i = 0; i < plusTerm.length; i++) {
@@ -74,14 +78,14 @@ export const ParsingPlus = (input: string):any => {
   }
 };
 
-
+/////////////////////////// key = '*' 인 tree 생성 함수 ///////////////////////////
 const ParsingTimes = (input: string) => {
-  let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식
+  let timesTerm = new Array(); //'\times,괄호,변수' 기준으로 분리된 식 저장
 
   let opList = new Array(); //'*' 갯수 대로 저장
   var bracket = new Array(); // 괄호 판단용 스택
 
-  var start = 0; // 식 분리용 구분자
+  var start = 0; // 식 분리용 포인터
   for (var i = 0; i < input.length - 1; i++) {
     //////////// 괄호 바깥 '+' 기준 식 분리 //////////////////
     if (input[i] === "(" || input[i] === "{") {
@@ -94,9 +98,9 @@ const ParsingTimes = (input: string) => {
     if (input[i] === "}") {
       bracket.pop();
     }
-    ////////////////////////////////
+    /////////////////////////////////////////
     if (bracket.length === 0) {
-      ///////////////// 괄호 바깥 //////////////////////
+      ///////////////// 괄호 바깥 이라면 아래 식 실행 //////////////////////
 
       if (input[i] === "\\") {
         ///////////////// \\ 구분자 만났을 때 //////////////////////
@@ -459,6 +463,7 @@ const ParsingTimes = (input: string) => {
         }
       }
       else if (input[i] === "-") {
+        ///////////////// -(, -{, -a 등의 -1 이 곱해진 항 분리 //////////////////////
         if(input[i+1] === "(" || input[i+1] === "{" ||input[i+1].match(/[a-zA-Z]/)){
             opList.push("*");
             timesTerm.push(input.slice(start, i + 1));
@@ -474,6 +479,7 @@ const ParsingTimes = (input: string) => {
     timesTerm.push(input);
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
+      /////////////// 기호 별 tree 생성을 위한 구분 ////////////////
       if (timesTerm[i] !== "") {
         if (timesTerm[i].slice(0, 5) === "\\frac") {
           GenFrac(timesTerm[i]);
@@ -500,6 +506,7 @@ const ParsingTimes = (input: string) => {
     timesTerm.push(input.slice(start));
     var timesTermList = new Array();
     for (var i = 0; i < timesTerm.length; i++) {
+      /////////////// 기호 별 tree 생성을 위한 구분 ////////////////
       if (timesTerm[i] !== "") {
         if (timesTerm[i].slice(0, 5) === "\\frac") {
           timesTermList.push(GenFrac(timesTerm[i]));
@@ -525,7 +532,8 @@ const ParsingTimes = (input: string) => {
     return { "*": timesTermList };
   }
 };
-
+//////////// termInput(식)이 splitChar(기호)로 이루어진 식이 맞는지 판별 //////////////////
+//////////// 현재 termInput(식)이 ^로 이루어진 식인지 \\div로 이루어진 식인지 판별하는데 쓰임 //////////////////
 const DeterminBracket = (termInput: string, splitChar: string) => {
   var bracket = new Array();
   var splitCharPos = 0;
@@ -566,7 +574,7 @@ const DeterminBracket = (termInput: string, splitChar: string) => {
     }
   }
 };
-
+/////////////////////////// key = 'const' or key = 'decm' or key = 'var' 인 tree 생성 함수 ///////////////////////////
 export const GenVar = (varInput: string) => {
   if (varInput === "-") {
   ////////////////// - 기호 ///////////////////////
@@ -594,12 +602,12 @@ export const GenVar = (varInput: string) => {
           if(splitDecial[0] === ""){
             splitDecial[0] = "None"
           }
-          return { const: [[decimal[0], splitDecial[0], repeatDecm], "decm"] };
+          return { const: [[decimal[0], splitDecial[0], repeatDecm], "decm"] }; //순환 소수
         }
         else{
           var splitDecialInt = splitDecial[1].slice(1,-1)
           repeatDecm = splitDecialInt
-          return { const: [[decimal[0],"None", repeatDecm], "decm"] }; //소수 없음
+          return { const: [[decimal[0],"None", repeatDecm], "decm"] }; //소수 부분 없음
         }
         
         
@@ -617,6 +625,7 @@ export const GenVar = (varInput: string) => {
   }
   else {
     ////////////////// 문자 ///////////////////////
+    ////////////////// TAS 요쳥에 따라 소수도 key = 'decm' 으로 변환 되도록 ///////////////////////
     if (varInput.match(/\./)) {
       var charDecimal = varInput.split(".");
       if(charDecimal[1].includes("\\dot")){
@@ -638,25 +647,25 @@ export const GenVar = (varInput: string) => {
         else{
           var splitCharDecialVar = splitCharDecial[1].slice(1,-1)
           repeatCharDecm = splitCharDecialVar
-          return { decm: [charDecimal[0], "None", repeatCharDecm]};
+          return { decm: [charDecimal[0], "None", repeatCharDecm]}; //소수 부분 없음
         }
         if(splitCharDecial[0] === ""){
           splitCharDecial[0] = "None"
         }
-        return { decm: [charDecimal[0], splitCharDecial[0], repeatCharDecm]};
+        return { decm: [charDecimal[0], splitCharDecial[0], repeatCharDecm]}; //순환 소수
       }
       else{
-        return { decm: [charDecimal[0], charDecimal[1], "None"]};
+        return { decm: [charDecimal[0], charDecimal[1], "None"]}; //순환 소수 아님
       } 
     }
     else{
-      return { var: varInput }; 
+      return { var: varInput }; // 문자
     }
 
 
   }
 };
-
+/////////////////////////// key = '/' 인 tree 생성 함수 ///////////////////////////
 const GenFrac = (fracInput: string) => {
   fracInput = fracInput.slice(5);
   var fracBracket = new Array();
@@ -683,7 +692,7 @@ const GenFrac = (fracInput: string) => {
 
   return { "/": fracTree };
 };
-
+/////////////////////////// key = 'root' 인 tree 생성 함수 ///////////////////////////
 const GenSqrt = (sqrtInput: string) => {
   sqrtInput = sqrtInput.slice(5);
   var sqrtBracket = new Array();
@@ -726,7 +735,7 @@ const GenSqrt = (sqrtInput: string) => {
 
   return { root: sqrtTree };
 };
-
+/////////////////////////// key = 'pow' 인 tree 생성 함수 ///////////////////////////
 const GenPow = (powInput: string) => {
   var firstSplitPow = powInput.split("^");
   
@@ -770,6 +779,7 @@ const GenPow = (powInput: string) => {
 
   return { pow: powTree };
 };
+/////////////////////////// key = '/' 인 tree 생성 함수 (단, input이 \\div 포함 식임) ///////////////////////////
 const GenDiv = (divInput: string) => {
   var firstSplitDiv = divInput.split("\\div");
   
